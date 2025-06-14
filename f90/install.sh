@@ -18,7 +18,7 @@ if [ "$compiler" != "fugaku" ]; then
       tar xvf xdrfile-1.1.4.tar.gz 
     fi
     cd xdrfile-1.1.4
-    ./configure --prefix=$XDRPATH/xdrfile-1.1.4
+    ./configure CC=gcc FC=gfortran --prefix=$XDRPATH/xdrfile-1.1.4
     make && make install
   cd $cwd
 
