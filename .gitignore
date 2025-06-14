@@ -1,0 +1,14 @@
+kk
+*.mod
+*.x
+*.dcd
+*test*
+sample_dcd
+*.synctex.gz
+*.idx
+*.toc
+*.out
+*.aux
+*.rc
+*.mod
+*.o

@@ -1,0 +1,93 @@
+#!/bin/bash
+
+opts=("$@")
+nopts=$#
+args=""
+for ((i=1;i<$nopts;i++));do
+  args="$args ${opts[$i]}"
+done
+script=${opts[0]}
+
+##########
+
+anas=("histogram"                \
+      "potential_of_mean_force"  \
+      "restricted_radial"        \
+      "extract_frame"            \
+      "random_frame"             \
+      "state_define"             \
+      "moving_average"           \
+      "average_function"         \
+      "return_prob"              \
+      "rprate"                   \
+      "trans_prob") 
+
+anas_abbrev=("hist"                \
+             "pmf"                 \
+             "rrdf"                \
+             "extf"                \
+             "randf"               \
+             "sdef"                \
+             "movave"              \
+             "avef"                \
+             "rp"                  \
+             "rprate"              \
+	     "tpm")
+
+exes=("histogram.x"                 \
+      "potential_of_mean_force.x"   \
+      "restricted_radial.x"         \
+      "extract_frame.x"             \
+      "random_frame.x"              \
+      "state_define.x"              \
+      "moving_average.x"            \
+      "average_function.x"          \
+      "return_prob.x"               \
+      "rprate_analysis.x"           \
+      "trans_prob.x") 
+
+hlp=("histogram               (hist)   : Histogram Analysis"                         \
+     "potential_of_mean_force (pmf)    : Free-energy Profile Analysis"               \
+     "restricted_radial       (rrdf)   : Restricted Radial Function Analysis"        \
+     "extract_frame           (extf)   : Extract Frames Using CV"                    \
+     "random_frame            (randf)  : Randomly Extract Frames"                    \
+     "state_define            (sdef)   : Define States From Time-series Data"        \
+     "moving_average          (movave) : Moving Average Analysis"                    \
+     "average_function        (avef)   : Function Average Analysis"                  \
+     "return_prob             (rp)     : Returning Probability Analysis"             \
+     "rprate                  (rprate) : Rate Constant Analysis based on RP theory"  \
+     "trans_prob              (tpm)    : Transition Probability Analysis")
+
+nanas=${#anas[@]}
+
+if [ "$script" == "-h" ];then
+  echo "Available analysis in Fortran ANATRA"
+  for ((i=0;i<$nanas;i++));do
+    echo "${hlp[$i]}"
+  done
+  exit 
+fi
+
+ichk=-1
+for ((i=0;i<$nanas;i++));do
+  if [ $script == ${anas[$i]} ];then
+    ichk=$i
+  fi
+done
+
+if [ $ichk -eq -1 ]; then
+  for ((i=0;i<$nanas;i++));do
+    if [ $script == ${anas_abbrev[$i]} ];then
+      ichk=$i
+    fi
+  done
+fi
+
+if [ $ichk -le -1 ]; then
+  echo "Error: $script is not available."
+  exit
+else
+  ana=$ANATRA_PATH/f90/bin/${exes[$ichk]}
+fi
+
+$ana $args

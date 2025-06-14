@@ -1,0 +1,20 @@
+FC=gfortran
+HOME=.
+LIB=../lib
+EXEF=rprate_analysis.x
+TRGT=rprate_analysis
+
+OBJ=${LIB}/util.f90            \
+    ${LIB}/const.f90           \
+    ${HOME}/rprate_ctrl.f90    \
+    ${HOME}/rprate_analyze.f90 \
+    ${HOME}/rprate_main.f90
+
+all   : ${TRGT}
+clean :
+	rm ${SRC}*.o *.mod
+
+${TRGT} : ${OBJ} 
+	${FC} -fopenmp -o ${EXEF} ${OBJ}
+	cp ${EXEF} ../bin/
+	rm -f *.mod

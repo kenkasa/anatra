@@ -1,0 +1,30 @@
+FC=gfortran
+HOME=.
+LIB=../lib
+XDRLIB=../lib/external/xdr-interface-fortran/xdrfile-1.1.4/lib
+XDRINTERFACE=../lib/external/xdr-interface-fortran
+EXEF=rot_analysis.x
+TRGT=rot_analysis
+
+OBJ=${XDRINTERFACE}/xdr.F90 \
+    ${LIB}/util.f90         \
+    ${LIB}/const.f90        \
+    ${LIB}/input.f90        \
+    ${LIB}/output.f90       \
+    ${LIB}/dcd.f90          \
+		${LIB}/xtclib.f90       \
+    ${LIB}/traj.f90         \
+    ${LIB}/com.f90          \
+    ${HOME}/rot_ctrl.f90    \
+    ${HOME}/rot_setup.f90   \
+    ${HOME}/rot_analyze.f90 \
+    ${HOME}/rot_main.f90
+
+all   : ${TRGT}
+clean :
+	rm ${SRC}*.o *.mod
+
+${TRGT} : ${OBJ} 
+	${FC} -fopenmp -o ${EXEF} ${OBJ} -L ${XDRLIB} -lxdrfile
+	cp ${EXEF} ../bin/
+	rm -f *.mod

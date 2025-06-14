@@ -1,0 +1,105 @@
+#!/bin/bash
+
+opts=("$@")
+nopts=$#
+args=""
+for ((i=1;i<$nopts;i++));do
+  args="$args ${opts[$i]}"
+done
+script=${opts[0]}
+fctrl=${opts[1]}
+
+##########
+
+anas=("trjconv"             \
+      "distance"            \
+      "center_of_mass"      \
+      "radial_distr"        \
+      "spatial_distr"       \
+      "rmsd"                \
+      "interaction_energy"  \
+      "lipid_order"         \
+      "area_per_lipid"      \
+      "z_profile"           \
+      "z_orient"            \
+      "species_info")
+
+anas_abbrev=("trj"   \
+	     "dis"   \
+	     "com"   \
+	     "rdf"   \
+	     "sdf"   \
+	     "rmsd"  \
+	     "ene"   \
+	     "scd"   \
+	     "apl"   \
+	     "zprof" \
+	     "zori"  \
+	     "spec") 
+
+exes=("NA"                   \
+      "distance.x"           \
+      "center_of_mass.x"     \
+      "radial_distr.x"       \
+      "spatial_distr.x"      \
+      "NA"                   \
+      "interaction_energy.x" \
+      "lipid_order.x"        \
+      "NA"                   \
+      "z_profile.x"          \
+      "z_orient.x"           \
+      "NA")
+
+hlp=("N/A: trjconv         (trj)   : Convert trajectory"                  \
+     "distance             (dis)   : Distance Analysis"                   \
+     "center_of_mass       (com)   : Center-of-Mass Analysis"             \
+     "radial_distr         (rdf)   : Radial-Distribution Analysis"        \
+     "spatial_distr        (sdf)   : Spatial-Distribution Analysis"       \
+     "N/A: rmsd            (rmsd)  : Root-Mean-Square-Deviation Analysis" \
+     "interaction_energy   (ene)   : Interaction Energy Analysis"         \
+     "lipid_order          (scd)   : Lipid S_CD order-parameter Analysis" \
+     "N/A: area_per_lipid  (apl)   : Area Per Lipid Analysis"             \
+     "z_profile            (zprof) : Z-profile Analysis"                  \
+     "z_orient             (zori)  : Orientation Analysis along z"        \
+     "N/A: species_info    (spec)  : Get Species information")
+
+#nanas=${#anas[@]}
+nanas=${#exes[@]}
+
+if [ "$script" == "-h" ];then
+  echo "Available analysis in ANATRA w/o VMD"
+  echo "(N/A: Not available)"
+  for ((i=0;i<$nanas;i++));do
+    echo "${hlp[$i]}"
+  done
+  exit 
+fi
+
+ichk=-1
+for ((i=0;i<$nanas;i++));do
+  if [ $script == ${anas[$i]} ];then
+    ichk=$i
+  fi
+done
+
+if [ $ichk -eq -1 ]; then
+  for ((i=0;i<$nanas;i++));do
+    if [ $script == ${anas_abbrev[$i]} ];then
+      ichk=$i
+    fi
+  done
+fi
+
+if [ $ichk -le -1 ]; then
+  echo "Error: $script is not available in ANATRA w/o VMD."
+  exit
+else
+  ana=$ANATRA_PATH/f90/bin/${exes[$ichk]}
+fi
+
+if [ "${exes[$ichk]}" == "NA" ];then
+  echo "Error: Sorry, $script is not supported."
+  exit
+fi
+
+$ana $fctrl 

@@ -1,0 +1,97 @@
+#!/bin/bash
+
+opts=("$@")
+nopts=$#
+args=""
+for ((i=1;i<$nopts;i++));do
+  args="$args ${opts[$i]}"
+done
+script=${opts[0]}
+
+##########
+
+anas=("trjconv"             \
+      "distance"            \
+      "center_of_mass"      \
+      "radial_distr"        \
+      "spatial_distr"       \
+      "rmsd"                \
+      "interaction_energy"  \
+      "lipid_order"         \
+      "area_per_lipid"      \
+      "z_profile"           \
+      "z_orient"            \
+      "species_info")
+
+anas_abbrev=("trj"   \
+	     "dis"   \
+	     "com"   \
+	     "rdf"   \
+	     "sdf"   \
+	     "rmsd"  \
+	     "ene"   \
+	     "scd"   \
+	     "apl"   \
+	     "zprof" \
+	     "zori"  \
+	     "spec") 
+
+exes=("trj_convert/tr_convert.tcl"           \
+      "distance/analysis.tcl"                \
+      "center_of_mass/analysis.tcl"          \
+      "radial_distr/analysis.tcl"            \
+      "spatial_distr/analysis.tcl"           \
+      "rmsd/analysis.tcl"                    \
+      "interaction_energy/analysis.tcl"      \
+      "lipid_order/analysis.tcl"             \
+      "area_per_lipid/analysis.tcl"          \
+      "z_profile/analysis.tcl"               \
+      "z_orient/analysis.tcl"                \
+      "species_info/analysis.tcl")
+
+hlp=("trjconv             (trj)   : Convert trajectory"                  \
+     "distance            (dis)   : Distance Analysis"                   \
+     "center_of_mass      (com)   : Center-of-Mass Analysis"             \
+     "radial_distr        (rdf)   : Radial-Distribution Analysis"        \
+     "spatial_distr       (sdf)   : Spatial-Distribution Analysis"       \
+     "rmsd                (rmsd)  : Root-Mean-Square-Deviation Analysis" \
+     "interaction_energy  (ene)   : Interaction Energy Analysis"         \
+     "lipid_order         (scd)   : Lipid S_CD order-parameter Analysis" \
+     "area_per_lipid      (apl)   : Area Per Lipid Analysis"             \
+     "z_profile           (zprof) : Z-profile Analysis"                  \
+     "z_orient            (zori)  : Orientation Analysis along z"        \
+     "species_info        (spec)  : Get Species information")
+
+nanas=${#anas[@]}
+
+if [ "$script" == "-h" ];then
+  echo "Available analysis in ANATRA"
+  for ((i=0;i<$nanas;i++));do
+    echo "${hlp[$i]}"
+  done
+  exit 
+fi
+
+ichk=-1
+for ((i=0;i<$nanas;i++));do
+  if [ $script == ${anas[$i]} ];then
+    ichk=$i
+  fi
+done
+
+if [ $ichk -eq -1 ]; then
+  for ((i=0;i<$nanas;i++));do
+    if [ $script == ${anas_abbrev[$i]} ];then
+      ichk=$i
+    fi
+  done
+fi
+
+if [ $ichk -le -1 ]; then
+  echo "Error: $script is not available."
+  exit
+else
+  ana=$ANATRA_PATH/tcl/${exes[$ichk]}
+fi
+
+vmd -dispdev text -e $ana -args $args

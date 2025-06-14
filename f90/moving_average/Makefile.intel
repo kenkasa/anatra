@@ -1,0 +1,22 @@
+FC=ifort
+HOME=.
+LIB=../lib
+EXEF=movave_analysis.x
+TRGT=movave_analysis
+
+OBJ=${LIB}/util.f90            \
+    ${LIB}/const.f90           \
+    ${LIB}/input.f90           \
+    ${LIB}/output.f90          \
+    ${HOME}/movave_ctrl.f90    \
+    ${HOME}/movave_analyze.f90 \
+    ${HOME}/movave_main.f90
+
+all   : ${TRGT}
+clean :
+	rm ${SRC}*.o *.mod
+
+${TRGT} : ${OBJ} 
+	${FC} -qopenmp -o ${EXEF} ${OBJ}
+	cp ${EXEF} ../bin/
+	rm -f *.mod

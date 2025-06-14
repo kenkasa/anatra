@@ -1,0 +1,22 @@
+FC=gfortran
+HOME=.
+LIB=../lib
+EXEF=rd_gather.x
+TRGT=rd_gather
+
+OBJ=${LIB}/util.f90        \
+    ${LIB}/const.f90       \
+    ${LIB}/input.f90       \
+    ${LIB}/output.f90      \
+    ${HOME}/rd_ctrl.f90    \
+    ${HOME}/rd_gather.f90 \
+    ${HOME}/rd_main.f90
+
+all   : ${TRGT}
+clean :
+	rm ${SRC}*.o *.mod
+
+${TRGT} : ${OBJ} 
+	${FC} -fopenmp -o ${EXEF} ${OBJ}
+	cp ${EXEF} ../bin/
+	rm -f *.mod
