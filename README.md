@@ -31,17 +31,17 @@ In this workflow, the corresponding Tcl script is executed on VMD according to t
 At the same time, since the Fortran programs themselves do not implement Atomselection directly, the source code remains simpler and easier to maintain. This also allows users to create new analysis programs with ease by building upon the libraries provided by **ANATRA**.
  
  ---
-* **Project Leader**   
+* **Project Leader/Main Developer**   
     * Kento Kasahara (Graduate School of Engineering Science, Univ of Osaka)
 
 * **Contributor**   
-    * Ren Masayama (Graduate School of Engineering Science, Univ of Osaka)
-    * Kazuya Okita (Graduate School of Engineering Science, Univ of Osaka)  
-    * Yuya Matsubara (Graduate School of Engineering Science, Univ of Osaka)
-    * Yusei Maruyama (Graduate School of Engineering Science, Univ of Osaka)
-    * Ryo Okabe (Graduate School of Engineering Science, Univ of Osaka)
-    * Yuki Yamashita (Graduate School of Engineering Science, Univ of Osaka)
-    * Nobuyuki Matubayasi (Graduate School of Engineering Science, Univ of Osaka) 
+    * Ren Masayama (Graduate School of Engineering Science, Univ. of Osaka)
+    * Kazuya Okita (Graduate School of Engineering Science, Univ. of Osaka)  
+    * Yuya Matsubara (Graduate School of Engineering Science, Univ. of Osaka)
+    * Yusei Maruyama (Graduate School of Engineering Science, Univ. of Osaka)
+    * Ryo Okabe (Graduate School of Engineering Science, Univ. of Osaka)
+    * Yuki Yamashita (Graduate School of Engineering Science, Univ. of Osaka)
+    * Nobuyuki Matubayasi (Graduate School of Engineering Science, Univ. of Osaka) 
 
 ---
 ANATRA is distributed under the **GNU General Public License version 2.0 (GPL v2.0)**.  
