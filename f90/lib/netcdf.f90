@@ -13,9 +13,11 @@ module mod_netcdfio
     integer :: natm
     integer :: coord_id
     integer :: box_id
+    integer :: angle_id
 
     real(8), allocatable :: coord(:, :, :)
     real(8), allocatable :: box  (:, :)
+    real(8), allocatable :: angle(:, :)
   end type s_netcdf
 
 
@@ -29,17 +31,28 @@ module mod_netcdfio
 
   contains
 !-----------------------------------------------------------------------
-    subroutine netcdf_open(netcdffile, iunit)
+    subroutine netcdf_open(netcdffile, iunit, is_write)
 !-----------------------------------------------------------------------
       implicit none
 
       character(len=MaxChar), intent(in)  :: netcdffile
       integer,                intent(out) :: iunit
+      logical, optional,      intent(in)  :: is_write
 
       integer :: retval 
+      logical :: is_w
 
 
-      retval = nf90_open(netcdffile, NF90_NOWRITE, iunit)
+      is_w = .false.
+      if (present(is_write)) then
+        is_w = is_write
+      end if
+
+      if (is_w) then 
+        retval = nf90_create(netcdffile, NF90_CLOBBER, iunit)
+      else
+        retval = nf90_open(netcdffile, NF90_NOWRITE, iunit)
+      end if 
 
       if (retval /= nf90_noerr) then
         write(iw,'("NetCDF_Open> Error.")')
@@ -58,8 +71,11 @@ module mod_netcdfio
       integer,                intent(in)            :: iunit
       character(len=MaxChar), optional, intent(in)  :: netcdffile 
 
+      integer :: retval
 
-      close(iunit)
+
+      retval = nf90_close(iunit)
+      !close(iunit)
 !
     end subroutine netcdf_close
 !-----------------------------------------------------------------------
@@ -94,6 +110,7 @@ module mod_netcdfio
       !
       retval = nf90_inq_varid        (io, "coordinates" , nc%coord_id)
       retval = nf90_inq_varid        (io, "cell_lengths", nc%box_id)
+      retval = nf90_inq_varid        (io, "cell_angles",  nc%angle_id) 
       
       ! Memory allocation  
       !
@@ -111,6 +128,7 @@ module mod_netcdfio
 
         allocate(nc%coord(1:3, nc%natm, nst))
         allocate(nc%box(1:3, nst))
+        allocate(nc%angle(1:3, nst))
 
       end if
        
@@ -127,18 +145,24 @@ module mod_netcdfio
       integer,           intent(in)    :: istep
       type(s_netcdf),    intent(inout) :: nc 
 
-      integer :: rstval
+      integer :: retval
      
 
-      rstval = nf90_get_var(                               &
+      retval = nf90_get_var(                               &
                  io,                                       &
                  nc%coord_id, nc%coord(1:3, 1:nc%natm, 1), &
                  start = (/1,       1, istep/),            &
                  count = (/3, nc%natm,     1/))
 
-      rstval = nf90_get_var(                               &
+      retval = nf90_get_var(                               &
                  io,                                       &
                  nc%box_id,  nc%box(1:3, 1),               &
+                 start = (/1, istep/),                     &
+                 count = (/3,     1/))
+
+      retval = nf90_get_var(                               &
+                 io,                                       &
+                 nc%angle_id, nc%angle(1:3, 1),            &
                  start = (/1, istep/),                     &
                  count = (/3,     1/))
 
@@ -176,6 +200,30 @@ module mod_netcdfio
 
 !
     end subroutine get_total_step_from_netcdf
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine get_natm_from_netcdf(ftrj, natm)
+!-----------------------------------------------------------------------
+      implicit none
+
+      character(len=MaxChar), intent(in)  :: ftrj
+      integer,                intent(out) :: natm
+
+      integer        :: io
+      type(s_netcdf) :: nc 
+
+
+      io = 51
+      call netcdf_open(ftrj, io)
+      call netcdf_read_dimension(io, nc)
+
+      natm = nc%natm
+
+      call netcdf_close(io)
+
+!
+    end subroutine get_natm_from_netcdf
 !-----------------------------------------------------------------------
 
 end module mod_netcdfio

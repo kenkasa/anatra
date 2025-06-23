@@ -207,6 +207,14 @@ module mod_analyze
                                state,          &
                                next)
        
+        else if (trajtype == TrajTypeNCD) then
+
+          call extract_netcdf2netcdf(input,          &
+                                     output,         &
+                                     option,         &
+                                     cv,             &
+                                     state,          &
+                                     next)
         end if
 
       end if
@@ -497,6 +505,164 @@ module mod_analyze
 
     end subroutine extract_xtc2xtc
 !-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine extract_netcdf2netcdf(input,          &
+                                     output,         &
+                                     option,         &
+                                     cv,             &
+                                     state,          &
+                                     next)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_input),  intent(in) :: input
+      type(s_output), intent(in) :: output
+      type(s_option), intent(in) :: option
+      type(s_cv),     intent(in) :: cv(:)
+      type(s_state),  intent(in) :: state(:)
+      integer,        intent(in) :: next
+
+      type(s_netcdf) :: nc_in, nc_out 
+
+      ! I/O 
+      !
+      integer                :: io_i, io_o
+      character(len=MaxChar) :: fname
+
+      ! Local
+      !
+      integer :: nfile, natm, nstep
+      integer :: dim_frame, dim_spatial, dim_atom
+      integer :: var_coords, var_box, var_angle, retval
+      integer :: start(3), count(3)
+      integer :: start_box(2), count_box(2)
+      logical :: traj_reactive = .false.
+
+      ! Dummy
+      !
+      integer :: itraj, istep, istep_tot
+      integer :: icount
+
+
+      ! Setup
+      !
+      nfile = input%ntraj
+
+      !  Check the existence of reactive state in trajectory
+      !
+      if (next == 0) then
+        write(iw,'("Extract_NetCDF2NetCDF> No reactive frames.")')
+        return
+      end if
+
+      ! Write
+      !
+      write(fname, '(a,".nc")') trim(output%fhead)
+      call netcdf_open(fname, io_o, is_write = .true.)
+
+      ! - Get header info
+      !
+      call netcdf_open(input%ftraj(1), io_i)
+      call netcdf_read_dimension(io_i, nc_in)
+      call netcdf_close(io_i) 
+
+      ! - Copy Dimension info 
+      !
+      natm         = nc_in%natm
+
+      nc_out%nstep = next 
+      nc_out%natm  = nc_in%natm
+
+      ! - Allocate
+      !
+      allocate(nc_out%coord(1:3, nc_out%natm, 1))
+      allocate(nc_out%box(1:3, 1))
+      allocate(nc_out%angle(1:3, 1))
+
+      ! - Define dimensions
+      !
+      retval = nf90_def_dim(io_o, "frame",   nf90_unlimited, dim_frame)
+      retval = nf90_def_dim(io_o, "spatial", 3,              dim_spatial)
+      retval = nf90_def_dim(io_o, "atom",    nc_out%natm,    dim_atom)
+     
+      ! - Define coordinate 
+      !
+      retval = nf90_def_var(io_o, "coordinates",  nf90_real, (/dim_spatial, dim_atom, dim_frame/), var_coords) 
+      retval = nf90_def_var(io_o, "cell_lengths", nf90_real, (/dim_spatial, dim_frame/),           var_box)
+      retval = nf90_def_var(io_o, "cell_angles",  nf90_real, (/dim_spatial, dim_frame/),           var_angle)
+
+      retval = nf90_put_att(io_o, var_coords,  "units",             "angstrom")
+      retval = nf90_put_att(io_o, var_box,     "units",             "angstrom")
+      retval = nf90_put_att(io_o, var_angle,   "units",             "degree")
+      retval = nf90_put_att(io_o, nf90_global, "Conventions",       "AMBER")
+      retval = nf90_put_att(io_o, nf90_global, "ConventionVersion", "1.0")
+      retval = nf90_put_att(io_o, nf90_global, "program",           "ANATRA")
+      retval = nf90_put_att(io_o, nf90_global, "programVersion",    "1.0")
+
+      retval = nf90_enddef(io_o)
+
+      ! Write
+      !
+      count     = (/3, natm, 1/)
+      count_box = (/3, 1/)
+      istep_tot = 0
+      icount    = 0
+      do itraj = 1, nfile 
+
+        ! Check
+        !
+        nstep         = state(itraj)%nstep 
+        traj_reactive = .false.
+
+        do istep = 1, nstep
+          if (state(itraj)%data(istep) == REACTIVE) then
+            traj_reactive = .true.
+            exit
+          end if 
+        end do
+
+        ! Skip if no reactive frames are present 
+        !
+        if (.not. traj_reactive) then
+           write(iw,'("Skip reading ", a)') trim(input%ftraj(itraj)) 
+           cycle
+        end if 
+
+        call netcdf_open(input%ftraj(itraj), io_i)
+        call netcdf_read_dimension(io_i, nc_in)
+
+        nstep = nc_in%nstep
+
+        do istep = 1, nstep
+
+          istep_tot = istep_tot + 1
+
+          if (state(itraj)%data(istep) == REACTIVE) then
+            write(iw,'("File ", i8, " Step ", i8, " : Extracted")') itraj, istep
+
+            icount    = icount + 1
+            start     = (/1, 1, icount/)
+            start_box = (/1, icount/) 
+            call netcdf_read_oneframe(io_i, istep, nc_in)
+            retval =  nf90_put_var(io_o, var_coords, nc_in%coord(1:3, 1:natm, 1), start = start,     count = count)
+            retval =  nf90_put_var(io_o, var_box,    nc_in%box(1:3, 1),           start = start_box, count = count_box) 
+            retval =  nf90_put_var(io_o, var_angle,  nc_in%angle(1:3, 1),         start = start_box, count = count_box) 
+
+          end if
+
+        end do
+
+        call netcdf_close(io_i)
+
+      end do
+
+      call netcdf_close(io_o)
+
+
+    end subroutine extract_netcdf2netcdf
+!-----------------------------------------------------------------------
+
 
 end module mod_analyze
 !=======================================================================

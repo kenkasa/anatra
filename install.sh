@@ -10,7 +10,7 @@ compiler=$1   # "intel" or "gcc"
 if [ "$compiler" == "" ]; then
   compiler=intel
   echo "no compiler type is specified"
-  echo ">> gcc is used for compile"
+  echo ">> intel is used for compile"
 elif [ "$compiler" == "gcc" ]||[ "$compiler" == "intel" ]||[ "$compiler" == "fugaku" ]; then
   echo "$compiler is used"
 fi
@@ -69,8 +69,8 @@ cd f90
 ./install.sh $compiler
 cd $cwd
 
-#if [ "$compiler" != "fugaku" ];then
-#  cd utility
-#  ./install.sh $compiler
-#  cd $cwd
-#fi
+if [ "$compiler" != "fugaku" ];then
+  cd utility
+  ./install.sh $compiler
+  cd $cwd
+fi

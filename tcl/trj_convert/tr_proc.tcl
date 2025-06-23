@@ -418,6 +418,24 @@ proc tr_convert {} {
     exec catcrd -i $ftmp -o $traj(to) >& $catcrdlog
     set  content [exec cat $catcrdlog]
     exec rm -f $ftmp $catcrdlog
+
+  } elseif {$traj(totype) == "netcdf"} {
+    set rand [expr int((100000*rand()))]
+    set ftmp [format "tr%06d.dcd" $rand]
+    set catcrdlog [format "catcrd%06.log" $rand]
+
+    animate write dcd              \
+                  $ftmp            \
+                  beg 0 end -1     \
+                  waitfor all      \
+                  sel $outsel $mol
+
+    puts ""
+    puts "Convert to NetCDF format file using CATCRD ..."
+    puts ""
+    exec catcrd -i $ftmp -o $traj(to) >& $catcrdlog
+    set  content [exec cat $catcrdlog]
+    exec rm -f $ftmp $catcrdlog
   }
 
   if {$tropt(output_sfile)} { 

@@ -208,7 +208,8 @@ module mod_analyze
             shift(1:3) = - fitu%movcom(1:3)
 
             do iatm = 1, fitu%natm
-              fitu%movcoord(1:3, iatm) = fitu%movcoord(1:3, iatm) - shift(1:3)
+              !fitu%movcoord(1:3, iatm) = fitu%movcoord(1:3, iatm) - shift(1:3)
+              fitu%movcoord(1:3, iatm) = fitu%movcoord(1:3, iatm) + shift(1:3)
             end do
 
             call get_trrot(fitu)
@@ -218,7 +219,8 @@ module mod_analyze
 
               ! Shift
               !
-              com%coord(1:3, imol, 1) = com%coord(1:3, imol, 1) - shift(1:3)
+              !com%coord(1:3, imol, 1) = com%coord(1:3, imol, 1) - shift(1:3)
+              com%coord(1:3, imol, 1) = com%coord(1:3, imol, 1) + shift(1:3)
 
               ! PBC
               !

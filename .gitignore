@@ -12,3 +12,9 @@ sample_dcd
 *.rc
 *.mod
 *.o
+f90/lib/external/xdr-interface-fortran/xdrfile-1.1.4
+f90/lib/external/netcdf/netcdf
+f90/lib/external/netcdf/netcdf-4.6.1
+f90/lib/external/netcdf/netcdf-fortran-4.4.4
+bin/catcrd
+utility/catcrd/catcrd

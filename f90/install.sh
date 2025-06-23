@@ -66,6 +66,7 @@ elif [ "$compiler" == "gcc" ]||[ "$compiler" == "intel" ]; then
 fi
 
 list="center_of_mass          \
+      distance                \
       lipid_order             \
       z_profile               \
       z_orient                \

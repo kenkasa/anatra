@@ -275,7 +275,7 @@ module mod_prmtop
       character(*),           intent(in)  :: flag
       integer,                intent(out) :: ierr
 
-      character(len=MaxChar) :: line, c1, c2 
+      character(len=MaxChar) :: line, c1, c2, percheck 
       logical                :: is_found
 
 
@@ -292,7 +292,14 @@ module mod_prmtop
           if (trim(c2) == trim(flag)) then
             is_found = .true.
             ! Skip FORMAT line
-            read(iunit,*) 
+            do while (.true.)
+              read(iunit,'(a)') percheck
+              if (percheck(1:1) /= '%') then
+                backspace(iunit)
+                exit
+              end if 
+            end do
+
           end if
         end if
 
@@ -317,11 +324,35 @@ module mod_prmtop
       integer, intent(in)  :: nsize
       integer, intent(out) :: arr(nsize) 
 
-      integer :: i, j, k
-      integer :: i10, ires, nl
+      integer, parameter   :: ncolmax = 20 
+
+      integer                :: i, j, k
+      integer                :: i10, ires, nl
+      integer                :: ierr, icol, ncol
+      integer                :: col(ncolmax+1)
+      character(len=MaxChar) :: line
 
 
-      nl   = 10
+      ! Check # of columns
+      !
+      read(iunit,'(a)') line
+      backspace(iunit)
+
+      ncol = ncolmax + 1
+100   ncol = ncol - 1
+      if (ncol == 0) then
+        write(iw,'("Read_Prmtop_Real> Error.")')
+        write(iw,'("No data on FLAG.")')
+        stop
+      end if
+
+      read(line,*,iostat=ierr) (col(icol), icol = 1, ncol)
+      if (ierr /= 0) then
+        go to 100
+      end if
+
+      nl  = ncol
+      !nl   = 10
 
       i10  = nsize / nl 
       ires = nsize - i10 * nl 
@@ -355,6 +386,7 @@ module mod_prmtop
       integer                :: ierr, icol, ncol
       integer                :: col(ncolmax+1) 
       character(len=MaxChar) :: line
+
 
       ! check # of columns
       !

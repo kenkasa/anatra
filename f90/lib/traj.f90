@@ -23,9 +23,9 @@ module mod_traj
   integer, parameter, public      :: TrajTypeDCD  = 1
   integer, parameter, public      :: TrajTypeXTC  = 2
   integer, parameter, public      :: TrajTypeNCD  = 3
-  character(*), parameter, public :: TrajTypes(3) = (/'DCD  ',&
-                                                      'XTC  ',&
-                                                      'NCD  '/)
+  character(*), parameter, public :: TrajTypes(3) = (/'DCD    ',&
+                                                      'XTC    ',&
+                                                      'NETCDF '/)
 
   ! structures
   !

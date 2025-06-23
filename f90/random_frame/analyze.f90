@@ -23,9 +23,11 @@ module mod_analyze
   private :: dcd2dcd
   private :: dcd2xtc
   private :: xtc2xtc
+  private :: netcdf2netcdf
   private :: dcd2dcd_shuffle
   private :: dcd2xtc_shuffle
   private :: xtc2xtc_shuffle
+  private :: netcdf2netcdf_shuffle
 
   contains
 !-----------------------------------------------------------------------
@@ -71,6 +73,12 @@ module mod_analyze
         call get_total_step_from_dcd(input%ftraj, nstep)
       else if (trajtype_in == TrajTypeXTC) then
         call get_total_step_from_xtc(input%ftraj, nstep)
+      else if (trajtype_in == TrajTypeNCD) then
+        call get_total_step_from_netcdf(input%ftraj, nstep)
+      end if
+
+      if (option%use_allsnap) then
+        next = nstep 
       end if
 
       ! memory allocation
@@ -91,7 +99,7 @@ module mod_analyze
       ! Extract all snapshots
       !
       else
-        do istep = 1, next
+        do istep = 1, nstep
           rand(istep) = istep 
         end do
       end if
@@ -128,7 +136,18 @@ module mod_analyze
           call xtc2xtc(input, output, option, rand, used_snap)
         end if
 
-      end if
+      else if (trajtype_in == TrajTypeNCD) then
+        if (trajtype_out == TrajTypeDCD) then
+          write(iw,'("Analyze> Error.")')
+          write(iw,'("Sorry, NetCDF => DCD convert is not supported.")')
+        else if (trajtype_out == TrajTypeXTC) then
+          write(iw,'("Analyze> Error.")')
+          write(iw,'("Sorry, NetCDF => XTC convert is not supported.")')
+        else if (trajtype_out == TrajTypeNCD) then
+          call netcdf2netcdf(input, output, option, rand, used_snap)
+        end if
+
+      end if 
 
       deallocate(rand, used_snap)
 
@@ -224,18 +243,32 @@ module mod_analyze
           stop
         else if (trajtype_out == TrajTypeXTC) then
           write(iw,'("Analyze> Error.")')
-          write(iw,'("Sorry, XTC => DCD convert is not supported for shuffle.")')
+          write(iw,'("Sorry, XTC => XTC convert is not supported for shuffle.")')
           stop
           !call xtc2xtc_shuffle(input, output, option, rand, used_snap)
         end if
 
+      else if (trajtype_in == TrajTypeNCD) then
+
+        if (trajtype_out == TrajTypeNCD) then
+          !call xtc2dcd(input, output, option, rand, used_snap)
+          write(iw,'("Analyze> Error.")')
+          write(iw,'("Sorry, NetCDF => DCD convert is not supported for shuffle.")')
+          stop
+        else if (trajtype_out == TrajTypeXTC) then
+          write(iw,'("Analyze> Error.")')
+          write(iw,'("Sorry, NetCDF => XTC convert is not supported for shuffle.")')
+          stop
+          !call xtc2xtc_shuffle(input, output, option, rand, used_snap)
+        else if (trajtype_out == TrajTypeNCD) then
+          call netcdf2netcdf_shuffle(input, output, option, frame_index)
+        end if
       end if
 
       deallocate(frame_index)
 
     end subroutine analyze_shuffle
 !-----------------------------------------------------------------------
-
 
 !-----------------------------------------------------------------------
     subroutine dcd2dcd(input, output, option, rand, used_snap)
@@ -556,6 +589,144 @@ module mod_analyze
 !-----------------------------------------------------------------------
 
 !-----------------------------------------------------------------------
+    subroutine netcdf2netcdf(input, output, option, rand, used_snap)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_input),   intent(in) :: input
+      type(s_output),  intent(in) :: output
+      type(s_option),  intent(in) :: option
+      integer,         intent(in) :: rand(:)
+      integer,         intent(in) :: used_snap(:)
+
+      type(s_netcdf) :: nc_in
+
+      ! I/O
+      !
+      integer                :: io_i, io_o
+      character(len=MaxChar) :: fname
+      character(len=MaxChar) :: finpcrd
+
+      ! Local
+      !
+      integer :: nstep_tot
+      integer :: natm, nrand, nstep, ndegen
+      integer :: dim_frame, dim_spatial, dim_atom
+      integer :: var_coords, var_box, var_angle, retval
+      integer :: start(3), count(3)
+      integer :: start_box(2), count_box(2)
+      logical :: traj_reactive = .false.
+
+      ! Dummy
+      !
+      integer :: id, jd, itraj, istep, jstep, istep_tot
+      integer :: iwrite
+      logical :: is_end
+
+      ! Arrays
+      !
+      real(8), allocatable :: box(:, :), angle(:, :) 
+      real(8), allocatable :: coord(:, :, :)
+
+
+      write(iw,*)
+      write(iw,'("NetCDF2NetCDF> Start the sampling")')
+
+      nrand = size(rand)
+
+      call get_natm_from_netcdf(input%ftraj(1), natm) 
+
+      write(fname, '(a, ".nc")') trim(output%fhead)
+      call netcdf_open(fname, io_o, is_write = .true.)
+
+      ! - Get header info
+      !
+      call netcdf_open(input%ftraj(1), io_i)
+      call netcdf_read_dimension(io_i, nc_in)
+      call netcdf_close(io_i)
+
+      ! - Allocate
+      !
+      allocate(coord(3, natm, 1))
+      allocate(box(3, 1))
+      allocate(angle(3, 1))
+
+      ! - Define dimensions
+      !
+      retval = nf90_def_dim(io_o, "frame",   nf90_unlimited, dim_frame)
+      retval = nf90_def_dim(io_o, "spatial", 3,              dim_spatial)
+      retval = nf90_def_dim(io_o, "atom",    natm,           dim_atom)
+     
+      ! - Define coordinate 
+      !
+      retval = nf90_def_var(io_o, "coordinates",  nf90_real, (/dim_spatial, dim_atom, dim_frame/), var_coords) 
+      retval = nf90_def_var(io_o, "cell_lengths", nf90_real, (/dim_spatial, dim_frame/),           var_box)
+      retval = nf90_def_var(io_o, "cell_angles",  nf90_real, (/dim_spatial, dim_frame/),           var_angle)
+
+      retval = nf90_put_att(io_o, var_coords,  "units",             "angstrom")
+      retval = nf90_put_att(io_o, nf90_global, "Conventions",       "AMBER")
+      retval = nf90_put_att(io_o, nf90_global, "ConventionVersion", "1.0")
+      retval = nf90_put_att(io_o, nf90_global, "program",           "ANATRA")
+      retval = nf90_put_att(io_o, nf90_global, "programVersion",    "1.0")
+
+      retval = nf90_enddef(io_o)
+
+      ! - Write
+      !
+      count     = (/3, natm, 1/)
+      count_box = (/3, 1/)
+      istep_tot = 0
+      iwrite    = 0
+      do itraj = 1, input%ntraj
+
+        call netcdf_open(input%ftraj(itraj), io_i)
+        call netcdf_read_dimension(io_i, nc_in)
+
+        nstep = nc_in%nstep
+
+        do istep = 1, nstep
+          istep_tot = istep_tot + 1
+          
+          if (mod(istep_tot, 100) == 0) then
+            write(iw,'("Step ",i0)') istep_tot
+          end if
+
+          ndegen = used_snap(istep_tot)
+
+          if (ndegen >= 1) then
+
+            call netcdf_read_oneframe(io_i, istep, nc_in)
+
+            do jstep = 0, ndegen - 1
+              iwrite = iwrite + 1
+
+              start     = (/1, 1, iwrite/)
+              start_box = (/1, iwrite/)
+
+              retval =  nf90_put_var(io_o, var_coords, nc_in%coord(1:3, 1:natm, 1), start = start,     count = count)
+              retval =  nf90_put_var(io_o, var_box,    nc_in%box(1:3, 1),           start = start_box, count = count_box) 
+              retval =  nf90_put_var(io_o, var_angle,  nc_in%angle(1:3, 1),         start = start_box, count = count_box)
+
+              if (option%out_rst7) then
+                write(finpcrd,'(a,i5.5,".inpcrd")') trim(output%fhead), iwrite
+                call write_inpcrd(finpcrd, nc_in%coord(1:3, 1:natm, 1), nc_in%box(1:3, 1))
+              end if
+            end do
+          end if
+
+        end do
+
+        call netcdf_close(io_i)
+
+      end do
+
+      call netcdf_close(io_o) 
+
+!
+    end subroutine netcdf2netcdf
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
     subroutine dcd2dcd_shuffle(input, output, option, frame_index)
 !-----------------------------------------------------------------------
       implicit none
@@ -667,6 +838,126 @@ module mod_analyze
       deallocate(coord_store, box_store)
 !
     end subroutine dcd2dcd_shuffle
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine netcdf2netcdf_shuffle(input, output, option, frame_index)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_input),   intent(in) :: input
+      type(s_output),  intent(in) :: output
+      type(s_option),  intent(in) :: option
+      integer,         intent(in) :: frame_index(:) 
+
+      type(s_netcdf) :: nc_in
+
+      ! I/O
+      !
+      integer                :: io_i, io_o
+      character(len=MaxChar) :: fname
+      character(len=MaxChar) :: finpcrd
+
+      ! Local
+      !
+      integer :: nstep_tot
+      integer :: natm, nrand, nstep, ndegen
+      logical :: is_end
+      integer :: dim_frame, dim_spatial, dim_atom
+      integer :: var_coords, var_box, var_angle, retval
+      integer :: start(3), count(3)
+      integer :: start_box(2), count_box(2)
+
+      ! Dummy
+      !
+      integer :: id, jd, itraj, istep, jstep, istep_tot
+      integer :: iwrite
+
+      ! Arrays
+      !
+      real(8), allocatable   :: coord_store(:, :, :)
+      real(8), allocatable   :: box_store(:, :)
+
+
+      write(iw,*)
+      write(iw,'("Dcd2dcd_Shuffle> Output shuffled trajectory")')
+
+      ! Total # of steps
+      !
+      nstep_tot = size(frame_index)
+
+      ! # of atoms
+      !
+      call get_natm_from_netcdf(input%ftraj(1), natm)
+
+      ! Allocation of output dcd
+      !
+      write(fname, '(a,".nc")') trim(output%fhead)
+      call netcdf_open(fname, io_o, is_write = .true.)
+
+      ! - Get header info
+      !
+      call netcdf_open(input%ftraj(1), io_i)
+      call netcdf_read_dimension(io_i, nc_in)
+      call netcdf_close(io_i)
+      call get_total_step_from_netcdf(input%ftraj, nstep_tot) 
+
+      ! Allocation of working space
+      !
+      allocate(coord_store(1:3, natm, nstep_tot))
+      allocate(box_store(1:3, nstep_tot))
+
+      ! Read Input netcdf 
+      !
+      count     = (/3, natm, 1/)
+      count_box = (/3, 1/)
+      istep_tot = 0
+      do itraj = 1, input%ntraj
+        write(iw,'("Read Traj: ", a)') trim(input%ftraj(itraj))
+
+        call netcdf_open(input%ftraj(itraj), io_i)
+        call netcdf_read_dimension(io_i, nc_in)
+        nstep = nc_in%nstep
+
+        do istep = 1, nstep
+          istep_tot = istep_tot + 1
+
+          if (mod(istep_tot, 100) == 0) then
+            write(iw,'("Read step ", i0)') istep_tot
+          end if
+
+          call netcdf_read_oneframe(io_i, istep, nc_in)
+
+          coord_store(1:3, 1:natm, istep_tot) = nc_in%coord(1:3, 1:natm, 1)
+          box_store(1:3, istep_tot)           = nc_in%box(1:3, 1)
+        end do 
+
+        call netcdf_close(io_i)
+
+      end do
+
+      ! Shuffle
+      !
+      do istep = 1, nstep_tot
+        id = frame_index(istep)
+
+        nc_in%coord(1:3, 1:natm, 1) = coord_store(1:3, 1:natm, id)
+        nc_in%box(1:3, 1)           = box_store(1:3, id)
+
+
+        start     = (/1, 1, istep/)
+        start_box = (/1, istep/)
+
+        retval =  nf90_put_var(io_o, var_coords, nc_in%coord(1:3, 1:natm, 1), start = start,     count = count)
+        retval =  nf90_put_var(io_o, var_box,    nc_in%box(1:3, 1),           start = start_box, count = count_box) 
+        retval =  nf90_put_var(io_o, var_angle,  nc_in%angle(1:3, 1),         start = start_box, count = count_box)
+
+      end do 
+
+      call netcdf_close(io_o)
+      deallocate(coord_store, box_store)
+!
+    end subroutine netcdf2netcdf_shuffle
 !-----------------------------------------------------------------------
 
 !-----------------------------------------------------------------------
