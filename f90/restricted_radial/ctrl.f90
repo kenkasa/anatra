@@ -37,7 +37,8 @@ module mod_ctrl
     real(8)              :: box_ref(3)    = 0.0d0
     real(8)              :: urange(2)     = 0.0d0 
     real(8), allocatable :: state_def(:, :, :)
-    real(8), allocatable :: react_range(:, :)
+    real(8), allocatable :: bound_range(:, :)
+    real(8), allocatable :: react_range(:, :) ! For backward
   end type s_option
 
   ! subroutines
@@ -104,17 +105,18 @@ module mod_ctrl
       integer :: ngrid                      = 1000
       integer :: nsta                       = 1 
       real(8) :: dr                         = 0.1d0
-      real(8) :: temperature                = 298.0d0
+      real(8) :: temperature                = 300.0d0
       real(8) :: vol0                       = 1661.0d0
       real(8) :: box_ref(3)                 = 0.0d0
       real(8) :: urange(2)                  = 0.0d0
-      real(8) :: react_range(2, ndim_max)   = 0.0d0
+      real(8) :: react_range(2, ndim_max)   = 0.0d0 
+      real(8) :: bound_range(2, ndim_max)   = 0.0d0
 
       integer :: i, j
       integer :: iopt, ierr
 
       namelist /option_param/ calcfe, use_bootstrap, refs_system, only_r, ndim, ngrid, nsta, dr, &
-                              temperature, vol0, box_ref, urange, react_range
+                              temperature, vol0, box_ref, urange, react_range, bound_range
 
       rewind iunit
       read(iunit, option_param)
@@ -134,10 +136,10 @@ module mod_ctrl
       write(iw,'("box_ref       = ", 3f20.10)') box_ref(1:3)
       write(iw,'("urange        = ", 2f20.10)') urange(1), urange(2) 
       write(iw,*)
-      write(iw,'("react_range   =")')
+      write(iw,'("bound_range   =")')
       do i = 1, ndim
         write(iw,'(es15.7, " <= component ",i0," < ",es15.7)') &
-          react_range(1, i), i, react_range(2, i) 
+          bound_range(1, i), i, bound_range(2, i) 
       end do
 
       !iopt = get_opt(mode, CoMMode, ierr)
@@ -162,14 +164,22 @@ module mod_ctrl
       option%urange        = urange
 
       allocate(option%react_range(1:2, ndim))
+      allocate(option%bound_range(1:2, ndim))
       allocate(option%state_def(2, ndim, Nstate))
 
       do i = 1, ndim
         option%react_range(1:2, i)   = react_range(1:2, i)
+        option%bound_range(1:2, i)   = bound_range(1:2, i)
       end do
 
+      ! For backward compatibility
+      !
+      if (abs(option%bound_range(1, i) - option%bound_range(2, i)) > 1.0d-5) then
+        option%react_range = option%bound_range
+      end if 
+
       do i = 1, ndim
-        option%state_def(1:2, i, 1) = react_range(1:2, i)
+        option%state_def(1:2, i, 1) = option%react_range(1:2, i)
       end do
 
       !do i = 1, 3

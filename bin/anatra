@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 opts=("$@")
 nopts=$#
@@ -21,7 +21,11 @@ anas=("trjconv"             \
       "area_per_lipid"      \
       "z_profile"           \
       "z_orient"            \
-      "species_info")
+      "rotation"            \
+      "cluster_size"        \
+      "free_volume"         \
+      "species_info"        \
+      "gauqm_prepper")
 
 anas_abbrev=("trj"   \
 	     "dis"   \
@@ -34,7 +38,11 @@ anas_abbrev=("trj"   \
 	     "apl"   \
 	     "zprof" \
 	     "zori"  \
-	     "spec") 
+	     "rot"   \
+	     "cls"   \
+	     "fvol"  \
+	     "spec"  \
+	     "gau")
 
 exes=("trj_convert/tr_convert.tcl"           \
       "distance/analysis.tcl"                \
@@ -47,7 +55,11 @@ exes=("trj_convert/tr_convert.tcl"           \
       "area_per_lipid/analysis.tcl"          \
       "z_profile/analysis.tcl"               \
       "z_orient/analysis.tcl"                \
-      "species_info/analysis.tcl")
+      "rotation/analysis.tcl"                \
+      "cluster_size/analysis.tcl"            \
+      "free_volume/analysis.tcl"             \
+      "species_info/analysis.tcl"            \
+      "gauqm_prepper/analysis.tcl")
 
 hlp=("trjconv             (trj)   : Convert trajectory"                  \
      "distance            (dis)   : Distance Analysis"                   \
@@ -60,7 +72,11 @@ hlp=("trjconv             (trj)   : Convert trajectory"                  \
      "area_per_lipid      (apl)   : Area Per Lipid Analysis"             \
      "z_profile           (zprof) : Z-profile Analysis"                  \
      "z_orient            (zori)  : Orientation Analysis along z"        \
-     "species_info        (spec)  : Get Species information")
+     "rotation            (rot)   : Rotation Analysis"                   \
+     "cluster_size        (cls)   : Cluster-size Analysis"               \
+     "free_volume         (fvol)  : Free-Volume Analysis"                \
+     "species_info        (spec)  : Get Species information"             \
+     "gauqm_prepper       (gau)   : Gaussian QM input prepper")
 
 nanas=${#anas[@]}
 

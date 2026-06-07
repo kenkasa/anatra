@@ -54,11 +54,10 @@ subroutine show_usage
 
   if (trim(f_ctrl) == "-h") then
     write(iw,'("&input_param")')
-    write(iw,'(" fcv      = ""cvdata1"" ""cvdata2"" ! Time-series CV data")')
-    write(iw,'(" flist_cv = ""list"" ! CV-file list (Either fcv or flist_cv should be specified)")')
+    write(iw,'(" flist_cv = ""list"" ! List of function-data files")')
     write(iw,'("/")')
     write(iw,'("&output_param")')
-    write(iw,'(" fhead         = ""filehead""  ! header of output file")')
+    write(iw,'(" fhead         = ""out""  ! header of output file")')
     write(iw,'("/")')
     write(iw,'("&option_param")')
     write(iw,'(" use_bootstrap =  .false.      ! use bootstrap or not")')

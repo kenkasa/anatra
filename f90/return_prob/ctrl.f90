@@ -343,11 +343,11 @@ module mod_ctrl
       end if
 
       if (.not. use_quench) then
-        if (use_zeropadding) then
-          write(iw,'("Read_Ctrl_Option> Error.")')
-          write(iw,'("use_zeropading = .true. is not available if use_quench = .false.")')
-          stop
-        end if
+        !if (use_zeropadding) then
+        !  write(iw,'("Read_Ctrl_Option> Error.")')
+        !  write(iw,'("use_zeropading = .true. is not available if use_quench = .false.")')
+        !  stop
+        !end if
 
         if (option%kins_mode == KinsModeQuench) then
           write(iw,'("Read_Ctrl_Option> Error.")')

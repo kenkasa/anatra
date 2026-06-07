@@ -54,7 +54,8 @@ subroutine show_usage
 
   if (trim(f_ctrl) == "-h") then
     write(iw,'("&input_param")')
-    write(iw,'(" flist = ""cvlist"" ! File that contains List of CV")')
+    write(iw,'(" flist_cv     = ""cvlist""     ! File that contains List of CV")')
+    write(iw,'(" flist_weight = ""weightlist"" ! File that contains List of Weight (Optional)")')
     write(iw,'("/")')
 
     write(iw,'("&output_param")')
@@ -70,8 +71,6 @@ subroutine show_usage
     write(iw,'("  origin      = 0.0d0 1.0d0 ! origin for each cv")')
     write(iw,'("  temperature = 298.0d0     ! temperature [K]")')
     write(iw,'("  box_system  = 50.0d0 50.0d0 50.0d0 ! system box size (used if ndim = 3)")')
-    write(iw,'("  nstep_tot   = 500000      ! totan number of steps (used if ndim = 3)")')
-    write(iw,'()')
     write(iw,'("  use_spline  = .false.     ! whether spline is used or not")')
     write(iw,'("  spline_resolution = 4     ! make spline fine as increasing this parameter ")')
     write(iw,'("  gen_script_mpl2d = .false.   ! whether generate python script or not (only ndim = 2 is supported)")')

@@ -521,7 +521,7 @@ module mod_grid3d
         write(UnitMPL,*)
 
         write(UnitMPL, '("plt.switch_backend(''agg'')")')
-        write(UnitMPL, '("plt.style.use(''seaborn-bright'')")')
+        !write(UnitMPL, '("plt.style.use(''seaborn-bright'')")')
         write(UnitMPL, '("")')
         write(UnitMPL, '("plt.rcParams[''font.family'']         = ''serif''")')
         write(UnitMPL, '("plt.rcParams[''font.serif'']          = ''Times New Roman''")')

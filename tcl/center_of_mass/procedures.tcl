@@ -41,6 +41,8 @@ proc show_usage {arglist} {
     puts "  -dt         <time interval>                                              \\"
     puts "  -t_sparse   <output time interval>                                       \\"
     puts "  -t_range    <analysis time range>                                        \\"
+    puts "  -t_sta      <Time of first frame to read traj (optional)>                \\"
+    puts "  -t_end      <Time of last  frame to read traj (optional)>                \\"
     puts "  -prep_only  <where analysis is performed or not (true or false)          \\"
     puts "              (default: false)"
     puts ""
@@ -83,6 +85,8 @@ proc define_optinfo {} {
   set opt(dt)         0.1 
   set opt(t_sparse)   -1.0
   set opt(t_range)    -1.0
+  set opt(t_sta)      -1.0
+  set opt(t_end)      -1.0
   set opt(mode)       "residue"
 
 }
@@ -114,6 +118,10 @@ proc read_optinfo {arglist} {
       "-t_sparse"   "value" $opt(t_sparse)]
   set opt(t_range)    [parse_arguments $arglist \
       "-t_range"    "value" $opt(t_range)]
+  set opt(t_sta)      [parse_arguments $arglist \
+      "-t_sta"      "value" $opt(t_sta)]
+  set opt(t_end)      [parse_arguments $arglist \
+      "-t_end"      "value" $opt(t_end)]
 }
 #-------------------------------------------------------------------------------
 
@@ -125,7 +133,6 @@ proc show_optinfo {} {
 
   puts "<< option info >>"
   puts "fhead      = $opt(fhead)"
-  puts "fts        = $opt(fts)"
   puts "out_com    = $opt(out_com)"
   puts "out_msd    = $opt(out_msd)"
   puts "onlyz      = $opt(onlyz)"
@@ -133,6 +140,8 @@ proc show_optinfo {} {
   puts "dt         = $opt(dt)"
   puts "t_sparse   = $opt(t_sparse)"
   puts "t_range    = $opt(t_range)"
+  puts "t_sta      = $opt(t_sta)"
+  puts "t_end      = $opt(t_end)"
   puts "mode       = $opt(mode)"
   puts ""
 
@@ -252,6 +261,8 @@ proc analyze {} {
   puts $f "   dt       = $opt(dt)"
   puts $f "   t_sparse = $opt(t_sparse)"
   puts $f "   t_range  = $opt(t_range)"
+  puts $f "   t_sta    = $opt(t_sta)"
+  puts $f "   t_end    = $opt(t_end)"
   puts $f " /"
 
   close $f

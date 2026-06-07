@@ -20,29 +20,31 @@ proc show_usage {arglist} {
 
   if {$help} {
     puts "Usage:"
-    puts "anatra z_profile                                                           \\"
-    puts "  -stype        <structure file type>                                      \\"
-    puts "  -sfile        <structure file name>                                      \\"
-    puts "  -tintype      <input trajectory file type>                               \\"
-    puts "  -tin          <input trajectory file name>                               \\"
-    puts "  -flist_traj   <trajectory file list (neccesary if tin is not specified)> \\"
-    puts "  -fhead        <header of output file name>                               \\"
-    puts "  -dz           <z-grid interval>                                          \\"
-    puts "  -sel0         <VMD selection>                                            \\"
-    puts "  -sel1         <VMD selection>                                            \\"
-    puts "  -mode0        <analysis mode (residue or whole or atom)>                 \\" 
-    puts "                (default: residue)                                         \\"
-    puts "  -mode1        <analysis mode (residue or whole or atom)>                 \\" 
-    puts "                (default: residue)                                         \\"
-    puts "  -target_selid <selection id for target species>                          \\"
-    puts "                (default: 0)                                               \\"
-    puts "  -center_selid <selection id for system center>                           \\"
-    puts "                (default: 1)                                               \\"
-    puts "  -denstype     <density type (number or electron)>                        \\"
-    puts "                (default: number)                                          \\"
-    puts "  -symmetrize   <whether symmetrized w.r.t. z=0 or not (true or false)>    \\"
-    puts "                (default: false)                                           \\"
-    puts "  -prep_only    <whether analysis is performed or not (true or false)>     \\"
+    puts "anatra z_profile                                                                          \\"
+    puts "  -stype        <structure file type>                                                     \\"
+    puts "  -sfile        <structure file name>                                                     \\"
+    puts "  -tintype      <input trajectory file type>                                              \\"
+    puts "  -tin          <input trajectory file name>                                              \\"
+    puts "  -flist_traj   <trajectory file list (neccesary if tin is not specified)>                \\"
+    puts "  -fhead        <header of output file name>                                              \\"
+    puts "  -dz           <z-grid interval>                                                         \\"
+    puts "  -sel0         <VMD selection>                                                           \\"
+    puts "  -sel1         <VMD selection>                                                           \\"
+    puts "  -mode0        <analysis mode (residue or whole or atom)>                                \\" 
+    puts "                (default: residue)                                                        \\"
+    puts "  -mode1        <analysis mode (residue or whole or atom)>                                \\" 
+    puts "                (default: residue)                                                        \\"
+    puts "  -target_selid <selection id for target species>                                         \\"
+    puts "                (default: 0)                                                              \\"
+    puts "  -center_selid <selection id for system center>                                          \\"
+    puts "                (default: 1)                                                              \\"
+    puts "  -denstype     <density type (number or electron)>                                       \\"
+    puts "                (default: number)                                                         \\"
+    puts "  -symmetrize   <whether symmetrized w.r.t. z=0 or not (true or false)>                   \\"
+    puts "                (default: false)                                                          \\"
+    puts "  -out_z        <whether time-series data of z-coordinate is outputed (true or false)>    \\"
+    puts "                (default: false)                                                          \\"
+    puts "  -prep_only    <whether analysis is performed or not (true or false)>                    \\"
     puts "                (default: false)>"
     puts ""
     puts "Usage:"
@@ -61,6 +63,7 @@ proc show_usage {arglist} {
     puts "  -center_selid 1            \\"
     puts "  -denstype     number       \\"
     puts "  -symmetrize   false        \\"
+    puts "  -out_z        false        \\"
     puts "  -prep_only    false"
     puts ""
     exit
@@ -83,6 +86,7 @@ proc define_optinfo {} {
   set opt(center_selid)  0
   set opt(denstype)      "number" 
   set opt(symmetrize)    "true" 
+  set opt(out_z)         "false"
 
 }
 #-------------------------------------------------------------------------------
@@ -109,6 +113,8 @@ proc read_optinfo {arglist} {
       "-denstype"       "value" $opt(denstype)]
   set opt(symmetrize)   [parse_arguments $arglist \
       "-symmetrize"     "value" $opt(symmetrize)]
+  set opt(out_z)        [parse_arguments $arglist \
+      "-out_z"          "value" $opt(out_z)]
 }
 #-------------------------------------------------------------------------------
 
@@ -127,6 +133,7 @@ proc show_optinfo {} {
   puts "center_selid = $opt(center_selid)"
   puts "denstype     = $opt(denstype)"
   puts "symmetrize   = $opt(symmetrize)"
+  puts "out_z        = $opt(out_z)"
   puts ""
 
 }
@@ -261,6 +268,7 @@ proc analyze {} {
   puts $f "   dz         = $opt(dz)"
   puts $f "   denstype   = \"$opt(denstype)\""
   puts $f "   symmetrize = .$opt(symmetrize)."
+  puts $f "   out_z      = .$opt(out_z)."
   puts $f " /"
 
   close $f

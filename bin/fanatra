@@ -18,21 +18,23 @@ anas=("histogram"                \
       "state_define"             \
       "moving_average"           \
       "average_function"         \
+      "bootstrap_prepper"        \
       "return_prob"              \
       "rprate"                   \
-      "trans_prob") 
+      "iepdyn") 
 
 anas_abbrev=("hist"                \
              "pmf"                 \
-             "rrdf"                \
+             "rrpmf"               \
              "extf"                \
              "randf"               \
              "sdef"                \
              "movave"              \
              "avef"                \
+	     "boot"                \
              "rp"                  \
              "rprate"              \
-	     "tpm")
+	     "iepdyn")
 
 exes=("histogram.x"                 \
       "potential_of_mean_force.x"   \
@@ -42,21 +44,23 @@ exes=("histogram.x"                 \
       "state_define.x"              \
       "moving_average.x"            \
       "average_function.x"          \
+      "bootstrap_prepper.x"         \
       "return_prob.x"               \
-      "rprate_analysis.x"           \
-      "trans_prob.x") 
+      "rprate.x"                    \
+      "iepdyn.x") 
 
 hlp=("histogram               (hist)   : Histogram Analysis"                         \
      "potential_of_mean_force (pmf)    : Free-energy Profile Analysis"               \
-     "restricted_radial       (rrdf)   : Restricted Radial Function Analysis"        \
+     "restricted_radial       (rrpmf)  : Restricted Radial Analysis"                 \
      "extract_frame           (extf)   : Extract Frames Using CV"                    \
      "random_frame            (randf)  : Randomly Extract Frames"                    \
      "state_define            (sdef)   : Define States From Time-series Data"        \
      "moving_average          (movave) : Moving Average Analysis"                    \
      "average_function        (avef)   : Function Average Analysis"                  \
+     "bootstrap_prepper       (boot)   : Bootstrap Sample Generator"                 \
      "return_prob             (rp)     : Returning Probability Analysis"             \
      "rprate                  (rprate) : Rate Constant Analysis based on RP theory"  \
-     "trans_prob              (tpm)    : Transition Probability Analysis")
+     "iepdyn                  (iepdyn) : Integral-equation Formalism of Population Dynamics")
 
 nanas=${#anas[@]}
 

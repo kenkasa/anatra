@@ -20,6 +20,7 @@ module mod_ctrl
   ! structures
   !
   type :: s_option
+    logical :: out_z      = .false.
     real(8) :: dz         = 0.1d0
     integer :: mode(2)    = (/CoMModeRESIDUE, CoMModeRESIDUE/)
     integer :: denstype   = DensityTypeNUMBER
@@ -81,6 +82,7 @@ module mod_ctrl
       integer,        intent(in)  :: io
       type(s_option), intent(out) :: option 
 
+      logical                :: out_z      = .false.
       real(8)                :: dz         = 0.1d0
       character(len=MaxChar) :: mode(2)    = (/'RESIDUE', 'RESIDUE'/)
       character(len=MaxChar) :: denstype   = 'NUMBER'
@@ -96,6 +98,7 @@ module mod_ctrl
       integer :: itraj
 
       namelist /option_param/  &
+        out_z,                 &
         dz,                    &
         mode,                  &
         denstype,              &
@@ -111,6 +114,7 @@ module mod_ctrl
       write(iw,'("mode       = ", 2(a,2x))') trim(mode(1)), trim(mode(2))
       write(iw,'("denstype   = ", a)')       trim(denstype)
       write(iw,'("symmetrize = ", a)')       get_tof(symmetrize)
+      write(iw,'("out_z      = ", a)') get_tof(out_z) 
 
       ! Parse
       !
@@ -134,6 +138,7 @@ module mod_ctrl
 
       option%dz         = dz
       option%symmetrize = symmetrize
+      option%out_z      = out_z
 
       ! Combination check
       !

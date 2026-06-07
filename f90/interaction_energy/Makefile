@@ -3,8 +3,8 @@ HOME=.
 LIB=../lib
 XDRLIB=../lib/external/xdr-interface-fortran/xdrfile-1.1.4/lib
 XDRINTERFACE=../lib/external/xdr-interface-fortran
-NCLIB=../lib/external/netcdf/netcdf/lib
-NCINC=../lib/external/netcdf/netcdf/include
+NCLIB=$(realpath ../lib/external/netcdf/netcdf/lib)
+NCINC=$(realpath ../lib/external/netcdf/netcdf/include)
 EXEF=interaction_energy.x
 TRGT=interaction_energy
 
@@ -36,6 +36,6 @@ clean :
 	rm ${SRC}*.o *.mod
 
 ${TRGT} : ${OBJ} 
-	${FC} -qopenmp -mkl -o ${EXEF} ${OBJ} -L ${XDRLIB} -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff
+	${FC} -qopenmp -mkl -o ${EXEF} ${OBJ} -L ${XDRLIB} -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff -Wl,-rpath,$(NCLIB)
 	cp ${EXEF} ../bin/
 	rm -f *.mod

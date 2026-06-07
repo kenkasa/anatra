@@ -64,7 +64,7 @@ subroutine show_usage
     write(iw,'("&option_param")')
     write(iw,'(" nsample         = 100       ! # of frames randomly extracted")')
     write(iw,'(" iseed           = 3141592   ! random seed")')
-    write(iw,'(" output_trajtype = 3141592   ! output trajectory format (dcd or xtc)")')
+    write(iw,'(" output_trajtype = ""dcd""   ! output trajectory format (dcd or xtc or netcdf)")')
     write(iw,'(" duplicate       = .false.   ! whether to allow the duplicated extraction")')
     write(iw,'(" out_rst7        = .false.   ! whether to output AMBER rst7 format file")')
     write(iw,'(" shuffle         = .false.   ! whether to shuffle frames (if true, all the frames are sampled")')

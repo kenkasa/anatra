@@ -31,8 +31,10 @@ module mod_ctrl
     integer :: mode(2)         = (/ComModeRESIDUE, ComModeRESIDUE/)
     integer :: distance_type   = DistanceTypeSTANDARD
     integer :: mindist_type(2) = (/MinDistTypeSITE, MinDistTypeSITE/)
+    real(8) :: weight_xyz(3)   = (/1.0d0, 1.0d0, 1.0d0/)
     real(8) :: t_sta           = 0.0d0
     real(8) :: t_end           = 0.0d0
+    integer :: stride          = 1
   end type s_option
 
   ! subroutines
@@ -85,8 +87,10 @@ module mod_ctrl
       character(len=MaxChar) :: mode(2)         = (/"RESIDUE", "RESIDUE"/)
       character(len=MaxChar) :: distance_type   = "STANDARD"
       character(len=MaxChar) :: mindist_type(2) = (/"SITE", "SITE"/)
+      real(8)                :: weight_xyz(3)
       real(8)                :: t_sta
       real(8)                :: t_end
+      integer                :: stride
 
       ! Parser
       !
@@ -101,8 +105,10 @@ module mod_ctrl
         mode,                 &
         distance_type,        &
         mindist_type,         &
+        weight_xyz,           &
         t_sta,                &
-        t_end 
+        t_end,                &
+        stride 
 
 
       ! Initialize
@@ -111,8 +117,10 @@ module mod_ctrl
       mode(1:2)     = "RESIDUE"
       distance_type = "STANDARD"
       mindist_type  = "SITE"
+      weight_xyz    = (/1.0d0, 1.0d0, 1.0d0/)
       t_sta         = 0.0d0
       t_end         = 0.0d0
+      stride        = 1
 
 
       ! Read namelist
@@ -127,6 +135,7 @@ module mod_ctrl
       write(iw,'("pbc           = ", a)') get_tof(pbc)
       write(iw,'("mode          = ",2(a,2x))') (trim(mode(i)), i = 1, 2)
       write(iw,'("distance_type = ", a)') trim(distance_type)
+      write(iw,'("weight_xyz    = ", 3f15.7)') (weight_xyz(i), i = 1, 3)
       write(iw,'("t_sta         = ", f15.7)') t_sta
       write(iw,'("t_end         = ", f15.7)') t_end
 
@@ -178,8 +187,10 @@ module mod_ctrl
           (trim(mindist_type(i)), i = 1, 2)
       end if
 
-      option%t_sta = t_sta
-      option%t_end = t_end
+      option%weight_xyz = weight_xyz
+      option%t_sta      = t_sta
+      option%t_end      = t_end
+      option%stride     = stride
 
       ! Combination check
       !

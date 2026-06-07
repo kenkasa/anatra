@@ -15,9 +15,9 @@ module mod_movave_ctrl
   ! structures
   !
   type :: s_movave_option
-    real(8) :: dt                    = 0.1d0
-    real(8) :: t_sta                 = 0.0d0
-    real(8) :: t_sep(MaxSep - 1)     = 0.0d0
+    real(8) :: dx                    = 0.1d0
+    real(8) :: xsta                  = 0.0d0
+    real(8) :: xsep(MaxSep - 1)      = 0.0d0
     integer :: nregion               = 1
     integer :: npoint(MaxSep)        = 5
     logical :: include_zero = .false.
@@ -82,9 +82,9 @@ module mod_movave_ctrl
 
       ! Local
       !
-      real(8) :: dt               = 0.1d0
-      real(8) :: t_sta            = 0.0d0 
-      real(8) :: t_sep(MaxSep -1) = 0.0d0
+      real(8) :: dx               = 0.1d0
+      real(8) :: xsta             = 0.0d0 
+      real(8) :: xsep(MaxSep -1)  = 0.0d0
       integer :: nregion          = 1
       integer :: npoint(MaxSep)   = 5
       logical :: include_zero     = .true.
@@ -96,17 +96,17 @@ module mod_movave_ctrl
       integer :: i
 
       namelist /movave_option_param/ &
-        dt,                          &
-        t_sta,                       &
-        t_sep,                       &
+        dx,                          &
+        xsta,                        &
+        xsep,                        &
         nregion,                     &
         npoint,                      &
         include_zero
 
       namelist /option_param/        &
-        dt,                          &
-        t_sta,                       &
-        t_sep,                       &
+        dx,                          &
+        xsta,                        &
+        xsep,                        &
         nregion,                     &
         npoint,                      &
         include_zero
@@ -127,18 +127,18 @@ module mod_movave_ctrl
       write(iw,'(">> Option section parameters")')
 
       if (.not. extr) then 
-        write(iw,'("dt           = ", f15.7)')     dt
-        write(iw,'("t_sta        = ", f15.7)')     t_sta
+        write(iw,'("dx           = ", f15.7)')     dx
+        write(iw,'("xsta         = ", f15.7)')     xsta
       end if
 
-      write(iw,'("t_sep        = ", 10(f15.7))') t_sep(1:2)
+      write(iw,'("xsep         = ", 10(f15.7))') xsep(1:2)
       write(iw,'("nregion      = ", i0)')        nregion
       write(iw,'("npoint       = ", 10(i0,2x))') (npoint(i), i = 1, nregion)
       write(iw,'("include_zero = ", a)')         get_tof(include_zero)
 
-      option%dt           = dt
-      option%t_sta        = t_sta
-      option%t_sep        = t_sep
+      option%dx           = dx
+      option%xsta         = xsta
+      option%xsep         = xsep
       option%nregion      = nregion
       option%npoint       = npoint
       option%include_zero = include_zero 

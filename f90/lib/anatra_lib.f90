@@ -250,7 +250,7 @@ module mod_anatra_ermod
         write(iw,'("grid_resolution  = ",i0)')       grid_resolution
         write(iw,'("box              = ", 3f20.10)') box(1:3)
         write(iw,'("box_shrink       = ", 3f20.10)') box_shrink(1:3)
-        write(iw,'("sdf_threshold    = ",  f20.10)') sdf_threshold 
+        write(iw,'("sdf_threshold    = ",  f20.10)') sdf_threshold
         write(iw,'("uid_fit          = ", i0)')      uid_fit
         write(iw,'("vid_fit          = ", i0)')      vid_fit
         write(iw,'("uid_ins          = ", i0)')      uid_ins

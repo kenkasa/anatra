@@ -27,7 +27,7 @@ module mod_bootstrap
     logical :: duplicate  = .true.
     integer :: boottype   = BootTypeSNAP
     integer :: iseed      = 0
-    integer :: nsample    = 1000
+    integer :: nsample    = 0 
     integer :: ntrial     = 1000
   end type s_bootopt
 
@@ -47,7 +47,7 @@ module mod_bootstrap
       integer                :: iseed       = -1
       character(len=MaxChar) :: boottype    = 'TRAJ'
       logical                :: duplicate   = .true.
-      integer                :: nsample     = 1000
+      integer                :: nsample     = 0 
       integer                :: ntrial      = 1000
 
       integer :: i, j

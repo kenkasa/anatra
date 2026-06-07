@@ -49,6 +49,7 @@ module mod_analyze
       !
       integer                :: itraj
       integer                :: istep, istep_tot
+      integer                :: istep_ex
 
       ! Arrays
       !
@@ -87,7 +88,12 @@ module mod_analyze
       nmol          = com_all%nmol
       com_all%nstep = nstep_tot
 
-      allocate(com_all%coord(1:3, nmol, nstep_tot))
+      if (option%nt_sta > 0) then
+        com_all%nstep = option%nt_end - option%nt_sta + 1 
+        allocate(com_all%coord(1:3, nmol, com_all%nstep)) 
+      else
+        allocate(com_all%coord(1:3, nmol, nstep_tot))
+      end if
 
       ! Get CoM
       !
@@ -99,8 +105,9 @@ module mod_analyze
         call open_trajfile(input%ftraj(itraj), trajtype, io, dcd, xtc, nc)
         call init_trajfile(trajtype, io, dcd, xtc, nc, natm)
 
-        is_end = .false.
-        istep  = 0
+        is_end   = .false.
+        istep    = 0
+        istep_ex = 0 ! used if t_sta > 0 (nt_sta > 0)
         do while (.not. is_end)
           istep     = istep     + 1
           istep_tot = istep_tot + 1
@@ -122,8 +129,21 @@ module mod_analyze
                        calc_coord = .true., & 
                        myrank = 1)
 
-          com_all%coord(1:3, 1:nmol, istep_tot) &
-            = com%coord(1:3, 1:nmol, 1)
+          if (option%nt_sta > 0) then
+            if (istep_tot >= option%nt_sta .and. &
+                istep_tot <= option%nt_end) then
+              istep_ex = istep_ex + 1
+              com_all%coord(1:3, 1:nmol, istep_ex) &
+                = com%coord(1:3, 1:nmol, 1)
+            end if
+
+            if (istep_tot > option%nt_end) then
+              exit
+            end if
+          else
+            com_all%coord(1:3, 1:nmol, istep_tot) &
+              = com%coord(1:3, 1:nmol, 1)
+          end if
 
         end do
 

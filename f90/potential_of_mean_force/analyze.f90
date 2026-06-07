@@ -16,7 +16,7 @@ module mod_analyze
 
   ! constants
   !
-  real(8), parameter, private :: EPS = 1.0d-8 
+  real(8), parameter, private :: EPS = 1.0d-20 
 
   ! structures
   !
@@ -73,7 +73,7 @@ module mod_analyze
       ! Arrays
       !
       type(s_cv), allocatable :: cv(:)
-      real(8),    allocatable :: state_count(:), fe_state(:)
+      real(8),    allocatable :: state_count(:), fe_state(:), pop(:)
       real(8),    allocatable :: fe_ave(:), fe_err(:)
       real(8),    allocatable :: fel_err(:)
 
@@ -135,10 +135,12 @@ module mod_analyze
         allocate(state_count(nstate))
         allocate(fe_state(nstate))
         allocate(fe_ave(nstate), fe_err(nstate))
+        allocate(pop(nstate))
         state_count = 0
         fe_state    = 0.0d0
         fe_ave      = 0.0d0
         fe_err      = 0.0d0
+        pop         = 0.0d0
       end if
 
       ! Read CV files
@@ -194,7 +196,12 @@ module mod_analyze
           is_inside = .true.
           do idim = 1, ndim
             val        = cv(ifile)%data(xyzcol(idim), istep)
-            gind(idim) = (val - origin(idim)) / del(idim) + 1
+            if (option%discretize_scheme == DiscretizeSchemeCenter) then
+              gind(idim) = nint((val - origin(idim)) / del(idim)) + 1
+            else if (option%discretize_scheme == DiscretizeSchemeForward) then
+              gind(idim) = (val - origin(idim)) / del(idim) + 1
+            end if
+
             if (gind(idim) < 1 .or. gind(idim) > ng3(idim)) then
               is_inside = .false.
             end if
@@ -238,7 +245,11 @@ module mod_analyze
         end do 
       end do
 
-      g0%data = g0%data / (weight_sum * dv)
+      if (option%norm_const < 0.0d0) then
+        g0%data = g0%data / (weight_sum * dv)
+      else
+        g0%data = option%norm_const * g0%data / (weight_sum * dv)
+      end if
 
       ! Calculate Gint = int dz (<Theta(z)>_sol' / <Theta(z)>_sol)
       ! Note that <Theta(z)>_sol = C * int dz g(z) 
@@ -309,6 +320,7 @@ module mod_analyze
         do istate = 1, nstate
           sval = state_count(istate)
           fe_state(istate) = - kT * log(sval/sref)
+          pop(istate)      = state_count(istate) / sref
         end do
       end if
 
@@ -357,22 +369,24 @@ module mod_analyze
 
       ! Normalize G 
       !
-      if (option%ndim < 3) then
-        call get_gmax(option, g0, gmax0)
-        g0%data = g0%data / gmax0
-
-        if (option%use_spline) then
-          call get_gmax(option, g1, gmax1)
-          g1%data = g1%data / gmax1
-        end if
-      else
-        if (.not. option%space3D) then
+      if (option%norm_const < 0.0d0) then
+        if (option%ndim < 3) then
           call get_gmax(option, g0, gmax0)
           g0%data = g0%data / gmax0
-
+       
           if (option%use_spline) then
             call get_gmax(option, g1, gmax1)
             g1%data = g1%data / gmax1
+          end if
+        else
+          if (.not. option%space3D) then
+            call get_gmax(option, g0, gmax0)
+            g0%data = g0%data / gmax0
+       
+            if (option%use_spline) then
+              call get_gmax(option, g1, gmax1)
+              g1%data = g1%data / gmax1
+            end if
           end if
         end if
       end if
@@ -494,7 +508,7 @@ module mod_analyze
         write(fhead_out,'(a,".festate")') trim(output%fhead)
         call open_file(fhead_out, iunit)
         do istate = 1, nstate
-          write(iunit,'(2f15.7)') fe_state(istate), fe_err(istate)
+          write(iunit,'(3f15.7)') fe_state(istate), fe_err(istate), pop(istate)
         end do
         close(iunit)
       end if

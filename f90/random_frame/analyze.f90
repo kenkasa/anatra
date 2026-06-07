@@ -193,6 +193,8 @@ module mod_analyze
         call get_total_step_from_dcd(input%ftraj, nstep)
       else if (trajtype_in == TrajTypeXTC) then
         call get_total_step_from_xtc(input%ftraj, nstep)
+      else if (trajtype_in == TrajTypeNCD) then
+        call get_total_step_from_netcdf(input%ftraj, nstep)
       end if
 
       allocate(frame_index(nstep))
@@ -250,7 +252,7 @@ module mod_analyze
 
       else if (trajtype_in == TrajTypeNCD) then
 
-        if (trajtype_out == TrajTypeNCD) then
+        if (trajtype_out == TrajTypeDCD) then
           !call xtc2dcd(input, output, option, rand, used_snap)
           write(iw,'("Analyze> Error.")')
           write(iw,'("Sorry, NetCDF => DCD convert is not supported for shuffle.")')
@@ -900,7 +902,27 @@ module mod_analyze
       call netcdf_open(input%ftraj(1), io_i)
       call netcdf_read_dimension(io_i, nc_in)
       call netcdf_close(io_i)
-      call get_total_step_from_netcdf(input%ftraj, nstep_tot) 
+      call get_total_step_from_netcdf(input%ftraj, nstep_tot)
+
+      ! - Define dimensions
+      !
+      retval = nf90_def_dim(io_o, "frame",   nf90_unlimited, dim_frame)
+      retval = nf90_def_dim(io_o, "spatial", 3,              dim_spatial)
+      retval = nf90_def_dim(io_o, "atom",    natm,           dim_atom)
+     
+      ! - Define coordinate 
+      !
+      retval = nf90_def_var(io_o, "coordinates",  nf90_real, (/dim_spatial, dim_atom, dim_frame/), var_coords) 
+      retval = nf90_def_var(io_o, "cell_lengths", nf90_real, (/dim_spatial, dim_frame/),           var_box)
+      retval = nf90_def_var(io_o, "cell_angles",  nf90_real, (/dim_spatial, dim_frame/),           var_angle)
+
+      retval = nf90_put_att(io_o, var_coords,  "units",             "angstrom")
+      retval = nf90_put_att(io_o, nf90_global, "Conventions",       "AMBER")
+      retval = nf90_put_att(io_o, nf90_global, "ConventionVersion", "1.0")
+      retval = nf90_put_att(io_o, nf90_global, "program",           "ANATRA")
+      retval = nf90_put_att(io_o, nf90_global, "programVersion",    "1.0")
+
+      retval = nf90_enddef(io_o)
 
       ! Allocation of working space
       !
@@ -952,6 +974,11 @@ module mod_analyze
         retval =  nf90_put_var(io_o, var_box,    nc_in%box(1:3, 1),           start = start_box, count = count_box) 
         retval =  nf90_put_var(io_o, var_angle,  nc_in%angle(1:3, 1),         start = start_box, count = count_box)
 
+        if (option%out_rst7) then
+           write(finpcrd,'(a,i5.5,".inpcrd")') trim(output%fhead), istep
+           call write_inpcrd(finpcrd, nc_in%coord(1:3, 1:natm, 1), nc_in%box(1:3, 1))
+        end if
+
       end do 
 
       call netcdf_close(io_o)
@@ -982,12 +1009,12 @@ module mod_analyze
       natm = size(coord(1, :))
 
       write(io,'(a)')   trim(title)
-      write(io,'(i5)')  natm
+      write(io,'(i8)')  natm
       do iatm = 1, natm
         write(io,'(3f12.7)', advance="no") &
           coord(1:3, iatm)
 
-        if (mod(iatm, 2) == 0) &
+        if (mod(iatm, 2) == 0 .or. iatm == natm) &
           write(io,*)
 
       end do

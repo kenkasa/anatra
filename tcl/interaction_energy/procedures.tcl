@@ -132,7 +132,7 @@ proc read_optinfo {arglist} {
       "-calc_elec"   "value" $opt(calc_elec)]
   set opt(vdw_type)   [parse_arguments $arglist \
       "-vdw_type"    "value" $opt(vdw_type)]
-  set opt(elec)       [parse_arguments $arglist \
+  set opt(elec_type)  [parse_arguments $arglist \
       "-elec_type"   "value" $opt(elec_type)]
   set opt(mode0)      [parse_arguments $arglist \
       "-mode0"       "value" $opt(mode0)]

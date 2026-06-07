@@ -33,9 +33,10 @@ module mod_traj
     real(8)                       :: dt
     integer                       :: trajtype_in       = TrajTypeDCD
     integer                       :: trajtype_out      = TrajTypeXTC
-    character(len=MaxChar)        :: molinfo(MaxTraj)  = "molinfo"
     character(len=MaxChar)        :: molinfo_refu      = "molinfo"
     character(len=MaxChar)        :: molinfo_refv      = "molinfo"
+
+    character(len=MaxChar), allocatable :: molinfo(:)
 
     integer                       :: nmolinfo 
   end type s_trajopt
@@ -85,15 +86,19 @@ module mod_traj
       type(s_trajopt),   intent(out) :: trajopt
       integer, optional, intent(in)  :: myrank
 
-      real(8)                      :: dt               = 0.0d0
-      character(len=MaxChar)       :: molinfo(MaxTraj) = ""
-      character(len=MaxChar)       :: molinfo_refu     = ""
-      character(len=MaxChar)       :: molinfo_refv     = ""
+      real(8)                             :: dt               = 0.0d0
+      character(len=MaxChar), allocatable :: molinfo(:)
+      character(len=MaxChar)              :: molinfo_refu     = ""
+      character(len=MaxChar)              :: molinfo_refv     = ""
 
       integer :: i, irank
       integer :: nmolinfo
 
       namelist /trajopt_param/ dt, molinfo, molinfo_refu, molinfo_refv 
+
+
+      allocate(molinfo(1:MaxTraj))
+      allocate(trajopt%molinfo(1:MaxTraj))
 
       molinfo = ""
       rewind iunit
@@ -497,20 +502,22 @@ module mod_traj
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
-    subroutine read_trajfile_oneframe(trajtype, iunit, istep, dcd, xtc, nc, is_end)
+    subroutine read_trajfile_oneframe(trajtype, iunit, istep, dcd, xtc, nc, is_end, is_final)
 !-------------------------------------------------------------------------------
       implicit none
 
-      integer,        intent(in)    :: trajtype
-      integer,        intent(in)    :: iunit
-      integer,        intent(in)    :: istep
-      type(s_dcd),    intent(inout) :: dcd
-      type(xtcfile),  intent(inout) :: xtc
-      type(s_netcdf), intent(inout) :: nc 
-      logical,        intent(out)   :: is_end
+      integer,           intent(in)    :: trajtype
+      integer,           intent(in)    :: iunit
+      integer,           intent(in)    :: istep
+      type(s_dcd),       intent(inout) :: dcd
+      type(xtcfile),     intent(inout) :: xtc
+      type(s_netcdf),    intent(inout) :: nc 
+      logical,           intent(out)   :: is_end
+      logical, optional, intent(out)   :: is_final
 
 
       is_end = .false.
+      if (present(is_final)) is_final = .false.
 
       if (trajtype == TrajTypeDCD) then
 
@@ -518,6 +525,10 @@ module mod_traj
           call read_dcd_oneframe(iunit, dcd)
         else
           is_end = .true.
+        end if
+
+        if (present(is_final) .and. istep == dcd%nstep) then
+          is_final = .true.
         end if
 
       else if (trajtype == TrajTypeXTC) then
@@ -534,6 +545,10 @@ module mod_traj
           call netcdf_read_oneframe(iunit, istep, nc)
         else
           is_end = .true.
+        end if
+
+        if (present(is_final) .and. istep == nc%nstep) then
+          is_final = .true.
         end if
 
       end if

@@ -47,8 +47,8 @@ subroutine show_usage
 
   if (trim(f_ctrl) == "-h") then
     write(iw,'("&input_param")')
-    write(iw,'(" fcv      = ""cvdata1"" ""cvdata2"" ! Time-series CV data")')
-    write(iw,'(" flist_cv = ""list"" ! CV-file list (Either fcv or flist_cv should be specified)")')
+    write(iw,'(" fcv      = ""funcdata1"" ""funcdata2"" ! Function data")')
+    write(iw,'(" flist_cv = ""list"" ! List of funciton-data files (Either fcv or flist_cv should be specified)")')
     write(iw,'("/")')
 
     write(iw,'("&output_param")')
@@ -56,9 +56,9 @@ subroutine show_usage
     write(iw,'("/")')
 
     write(iw,'("&option_param")')
-    write(iw,'("  dt           = 0.1d0   ! time grid")')
-    write(iw,'("  t_sta        = 0.0d0   ! minimum value of time")')
-    write(iw,'("  t_sep        = 1.0d0   ! boundary of time domains (if no boundary (nregion = 1), &
+    write(iw,'("  dx          = 0.1d0   ! grid spacing")')
+    write(iw,'("  xsta        = 0.0d0   ! minimum value of grid")')
+    write(iw,'("  xsep        = 1.0d0   ! boundary of domains (if no boundary (nregion = 1), &
               &                          ! specify t_sep = 0.0d0)")')
     write(iw,'("  nregion      = 2       ! # of diffrent regions")')
     write(iw,'("  npoint       = 3 5     ! # of data points used for each region (odd number)")')

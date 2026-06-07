@@ -84,24 +84,44 @@ module mod_potential
     !
     !---------------------------------------------------------------------------
 
-    subroutine alloc_pot(natm, pot)
+    subroutine alloc_pot(natm, pot, diagonal)
 
       implicit none
 
       ! formal arguments
-      integer,     intent(in)    :: natm(2)
-      type(s_pot), intent(inout) :: pot 
+      integer,           intent(in)    :: natm(2)
+      type(s_pot),       intent(inout) :: pot
+      logical, optional, intent(in)    :: diagonal 
+     
+      logical :: diag
+
       
-      
-      allocate(pot%acoef(natm(2), natm(1)))
-      allocate(pot%bcoef(natm(2), natm(1)))
-      allocate(pot%ljsgm(natm(2), natm(1)))
-      allocate(pot%ljeps(natm(2), natm(1)))
-      allocate(pot%rwell2(natm(2), natm(1)))
-      allocate(pot%uljmin(natm(2), natm(1)))
-      allocate(pot%q1(natm(1)))
-      allocate(pot%q2(natm(2)))
-      allocate(pot%qq(natm(2), natm(1)))
+      diag = .false.
+      if (present(diagonal)) then
+        diag = diagonal
+      end if 
+     
+      if (diag) then 
+        allocate(pot%acoef(natm(1),1))
+        allocate(pot%bcoef(natm(1),1))
+        allocate(pot%ljsgm(natm(1),1))
+        allocate(pot%ljeps(natm(1),1))
+        allocate(pot%rwell2(natm(1), 1))
+        allocate(pot%uljmin(natm(1), 1))
+        allocate(pot%q1(natm(1)))
+        allocate(pot%q2(natm(1)))
+        allocate(pot%qq(natm(1), 1))
+      else
+        allocate(pot%acoef(natm(2), natm(1)))
+        allocate(pot%bcoef(natm(2), natm(1)))
+        allocate(pot%ljsgm(natm(2), natm(1)))
+        allocate(pot%ljeps(natm(2), natm(1)))
+        allocate(pot%rwell2(natm(2), natm(1)))
+        allocate(pot%uljmin(natm(2), natm(1)))
+        allocate(pot%q1(natm(1)))
+        allocate(pot%q2(natm(2)))
+        allocate(pot%qq(natm(2), natm(1)))
+      end if
 
     end subroutine alloc_pot 
 
@@ -160,19 +180,31 @@ module mod_potential
     !
     !---------------------------------------------------------------------------
 
-    subroutine setup_pot(traj, pot, prmtop, anaparm)
+    subroutine setup_pot(traj, pot, prmtop, anaparm, diagonal)
 
       implicit none
 
       ! formal arguments
-      type(s_traj),    intent(in)           :: traj(2)
-      type(s_pot),     intent(inout)        :: pot
-      type(s_prmtop),  intent(in), optional :: prmtop
-      type(s_anaparm), intent(in), optional :: anaparm 
-     
+      type(s_traj),     intent(in)           :: traj(2)
+      type(s_pot),      intent(inout)        :: pot
+      type(s_prmtop),   intent(in), optional :: prmtop
+      type(s_anaparm),  intent(in), optional :: anaparm
+      logical,          intent(in), optional :: diagonal
+    
+      logical :: diag 
+
+
+      diag = .false.
+      if (present(diagonal)) then
+        diag = diagonal
+      end if
 
       if (present(prmtop)) then
-        call setup_pot_amber(traj, prmtop, pot)
+        if (diag) then
+          call setup_pot_amber_diagonal(traj, prmtop, pot)
+        else
+          call setup_pot_amber(traj, prmtop, pot)
+        end if
       else if (present(anaparm)) then
         call setup_pot_anaparm(traj, anaparm, pot)
       end if
@@ -251,12 +283,85 @@ module mod_potential
           pot%qq(jatm, iatm) = prmtop%charge(traj(1)%ind(iatm)) &
                              * prmtop%charge(traj(2)%ind(jatm))
 
-
         end do
       end do
 
 
     end subroutine setup_pot_amber
+
+    !---------------------------------------------------------------------------
+    !
+    !  Subroutine    setup_pot_amber_diagonal 
+    !  @brief        setup potential paramters from AMBER parm7 file info. 
+    !  @authors      KK
+    !  @param[in]    traj(2) : structure of ANATRA trajectories 
+    !  @param[in]    prmtop  : structure of AMBER parm7 file info.
+    !  @param[inout] pot     : structure of potential information 
+    !
+    !---------------------------------------------------------------------------
+
+    subroutine setup_pot_amber_diagonal(traj, prmtop, pot)
+
+      implicit none
+
+      ! formal arguments
+      type(s_traj),   intent(in)           :: traj(2)
+      type(s_prmtop), intent(in)           :: prmtop
+      type(s_pot),    intent(inout)        :: pot
+
+      integer :: iatm, jatm, iac1, iac2, ico, ipair
+      integer :: ntypes
+      real(8) :: a, b, s, e
+
+
+      pot%natm(1) = traj(1)%natm
+      pot%natm(2) = traj(2)%natm
+
+      ntypes = prmtop%ntypes
+      do iatm = 1, traj(1)%natm
+        iac1         = prmtop%iac(traj(1)%ind(iatm))
+        iac2         = iac1
+        pot%q1(iatm) = prmtop%charge(traj(1)%ind(iatm))
+
+        ipair = ntypes * (max(iac1, iac2) - 1) + min(iac1, iac2)
+        ico   = prmtop%ico(ipair)
+
+        ! LJ parameters
+        !
+        a     = prmtop%cn1(ico)
+        b     = prmtop%cn2(ico)
+
+        pot%acoef(iatm, 1)  = a
+        pot%bcoef(iatm, 1)  = b
+        if (a < 1.0d-8 .or. b < 1.0d-8) then
+          pot%rwell2(iatm, 1) = 0.0d0 
+          pot%uljmin(iatm, 1) = 0.0d0 
+        else
+          pot%rwell2(iatm, 1) = (2.0d0 * a / b)**(1.0d0 / 3.0d0)
+          pot%uljmin(iatm, 1) = - 0.25d0 * b * b / a
+        end if
+
+
+        if (b > 1.0d-8) then
+          s                 = (a / b) ** (1.0d0 / 6.0d0)
+          e                 = b / (4.0d0 * (a / b))
+          !pot%ljsgm(jatm, iatm) = s
+          !pot%ljeps(jatm, iatm) = e
+          pot%ljsgm(iatm, 1) = s
+          pot%ljeps(iatm, 1) = e
+        else
+          pot%ljsgm(iatm, 1) = 0.0d0 
+          pot%ljeps(iatm, 1) = 0.0d0 
+        end if
+
+        ! Charge parameters
+        !
+        !pot%qq(jatm, iatm) = prmtop%charge(traj(1)%ind(iatm)) &
+        !                   * prmtop%charge(traj(2)%ind(jatm))
+
+      end do
+
+    end subroutine setup_pot_amber_diagonal
 
     !---------------------------------------------------------------------------
     !

@@ -21,6 +21,7 @@ module mod_ctrl
     real(8)              :: dt           = 1.0d0
     real(8), allocatable :: state_def(:, :, :)
     real(8), allocatable :: react_range(:, :)
+    real(8), allocatable :: extract_range(:, :)
   end type s_option
 
   ! subroutines
@@ -80,6 +81,7 @@ module mod_ctrl
       integer :: ndim                       = 1
       real(8) :: dt                         = 1.0d0
       real(8) :: react_range(2, ndim_max)   = 0.0d0
+      real(8) :: extract_range(2, ndim_max) = 0.0d0
 
       ! Dummy
       !
@@ -88,7 +90,8 @@ module mod_ctrl
       namelist /option_param/ &
         ndim,                 &
         dt,                   &
-        react_range
+        react_range,          &
+        extract_range
 
 
       rewind io
@@ -98,10 +101,10 @@ module mod_ctrl
       write(iw,'(">> Option section parameters")')
       write(iw,'("ndim          = ", i0)') ndim
       write(iw,*)
-      write(iw,'("react_range   =")')
+      write(iw,'("extract_range   =")')
       do i = 1, ndim
         write(iw,'(es15.7, " <= component ",i0," < ",es15.7)') &
-          react_range(1, i), i, react_range(2, i) 
+          extract_range(1, i), i, extract_range(2, i) 
       end do
 
       ! Send
@@ -110,14 +113,22 @@ module mod_ctrl
       option%dt            = dt
 
       allocate(option%react_range(1:2, ndim))
+      allocate(option%extract_range(1:2, ndim))
       allocate(option%state_def(2, ndim, Nstate))
 
       do i = 1, ndim
-        option%react_range(1:2, i)   = react_range(1:2, i)
+        option%react_range  (1:2, i)   = react_range  (1:2, i)
+        option%extract_range(1:2, i)   = extract_range(1:2, i)
       end do
 
+      ! For backward compatibility
+      !
+      if (abs(option%extract_range(1, i) - option%extract_range(2, i)) > 1.0d-5) then
+        option%react_range = option%extract_range
+      end if 
+
       do i = 1, ndim
-        option%state_def(1:2, i, 1) = react_range(1:2, i)
+        option%state_def(1:2, i, 1) = option%extract_range(1:2, i)
       end do
 
       ! Combination check

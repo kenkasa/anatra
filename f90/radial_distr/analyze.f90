@@ -34,7 +34,7 @@ module mod_analyze
 
       ! Local
       !
-      integer :: trajtype, natm, nstep_tot, nself
+      integer :: trajtype, natm, nstep_tot, nstep_ex, nself
       integer :: nmol(2), nr, npair, npair_distinct
       real(8) :: boxave(3), vol, dv, zsta, zmin, zmax
       real(8) :: m, d(3), d2, r, fourpi, fact
@@ -123,6 +123,7 @@ module mod_analyze
       nself       = 0
 
       istep_tot = 0
+      nstep_ex  = 0
       do itraj = 1, input%ntraj
         call open_trajfile(input%ftraj(itraj), trajtype, io, dcd, xtc, nc)
         call init_trajfile(trajtype, io, dcd, xtc, nc, natm)
@@ -140,6 +141,13 @@ module mod_analyze
 
           if (mod(istep_tot, 100) == 0) then
             write(iw,'("Step ",i0)') istep_tot
+          end if
+
+
+          if (option%nt_sta > 0) then
+            if (istep_tot <  option%nt_sta) cycle
+            if (istep_tot <= option%nt_end) nstep_ex = nstep_ex + 1
+            if (istep_tot >  option%nt_end) exit 
           end if
 
           boxave(:) = boxave(:) + traj(1)%box(:, 1)
@@ -174,7 +182,11 @@ module mod_analyze
 
       end do   ! traj
 
+
       nstep_tot = istep_tot
+      if (option%nt_sta > 0) &
+        nstep_tot = option%nt_end - option%nt_sta + 1
+
       boxave(:) = boxave(:) / dble(nstep_tot)
       vol       = boxave(1) * boxave(2) * boxave(3)
 

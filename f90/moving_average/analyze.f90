@@ -102,7 +102,7 @@ module mod_movave_analyze
         !end if
       else
         do i = 1, option%nregion - 1
-          nsplit(i) = nint((option%t_sep(i) - option%t_sta) / option%dt) 
+          nsplit(i) = nint((option%xsep(i) - option%xsta) / option%dx) 
         end do
         nsplit(0)              = iorg
         nsplit(option%nregion) = nstep - 1 
@@ -174,12 +174,12 @@ module mod_movave_analyze
         do istep = 0, nstep - 2
           diff                       =   movave(ifile)%data(istep + 1) &
                                        - movave(ifile)%data(istep)
-          movave(ifile)%deriv(istep) =   diff / option%dt 
+          movave(ifile)%deriv(istep) =   diff / option%dx
         end do
 
         diff                           =   movave(ifile)%data(nstep) &
                                          - movave(ifile)%data(nstep - 1)
-        movave(ifile)%deriv(nstep - 1) =   diff / option%dt
+        movave(ifile)%deriv(nstep - 1) =   diff / option%dx
 
         deallocate(input_data)
       end do 

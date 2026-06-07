@@ -29,6 +29,7 @@ module mod_cv
   public :: read_ctrl_cvinfo
   public :: read_ctrl_cvinfo_weight
   public :: read_cv
+  public :: deallocate_cv
 
   contains
 !-----------------------------------------------------------------------
@@ -153,11 +154,11 @@ module mod_cv
         ns = nsta - 1
       end if
 
-      open(UnitCV,file=trim(fcv))
+      open(UnitCV, file = trim(fcv), status = 'old')
       nstep = 0
       ncomm = 0
       do while(.true.)
-        read(UnitCV,'(a)',end=100) cdum
+        read(UnitCV,'(a)', end = 100) cdum
         cdum2 = trim(adjustl(cdum))
         if (cdum2(1:1) /= "#") then
           nstep = nstep + 1
@@ -201,6 +202,74 @@ module mod_cv
       
 
     end subroutine read_cv
+!-----------------------------------------------------------------------
+!
+!-----------------------------------------------------------------------
+    subroutine read_cv_split(io, ndim, split_word, cv, is_end)
+!-----------------------------------------------------------------------
+      implicit none
+
+      integer,                intent(in)  :: io
+      integer,                intent(in)  :: ndim
+      character(*),           intent(in)  :: split_word 
+      type(s_cv),             intent(out) :: cv
+      logical,                intent(out) :: is_end
+
+      integer                :: istep, jstep, icv
+      integer                :: nstep, pl, ns, ncomm
+      character(len=MaxChar) :: cdum, cdum2
+      logical                :: split_found
+
+
+      ! Setup
+      !
+      is_end = .false.
+      nstep  = 0
+
+      split_found = .false.
+      do while(.not. split_found)
+        read(io,'(a)', end = 100) cdum
+        cdum2 = trim(adjustl(cdum))
+        if (cdum2(1:1) /= "#") then
+          nstep = nstep + 1
+        else
+          if (trim(cdum2) == trim(split_word)) then
+            split_found = .true.
+          end if
+        end if
+      end do
+
+100   continue
+
+      pl = 1 ! corresponding to split-word line
+
+      if (.not. split_found) then  ! i.e., reaching final line
+        is_end   = .true.
+        cv%nstep = 0 
+        !pl       = 0
+        if (nstep == 0) return
+      end if
+
+      do istep = 1, nstep + pl 
+        backspace(io) 
+      end do
+
+      allocate(cv%x(nstep))
+      allocate(cv%data(ndim, nstep))
+
+      cv%x     = ''
+      cv%ndim  = ndim
+      cv%nstep = nstep
+
+      do istep = 1, nstep
+        read(io,*) cv%x(istep), (cv%data(icv, istep), icv = 1, ndim) 
+      end do
+
+      if (split_found) then
+        read(io,*) ! Skip split-word line
+      end if
+      
+    end subroutine read_cv_split
 !-----------------------------------------------------------------------
 !
 !-----------------------------------------------------------------------
@@ -285,6 +354,27 @@ module mod_cv
 
 
     end subroutine read_cv_weight
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine deallocate_cv(cv)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_cv), intent(inout) :: cv
+
+
+      if (allocated(cv%x)) then
+        cv%nstep = 0
+        cv%ndim  = 0
+        deallocate(cv%x, cv%data)
+        if (allocated(cv%weight)) then
+          deallocate(cv%weight)
+        end if
+      end if 
+
+
+    end subroutine deallocate_cv
 !-----------------------------------------------------------------------
 end module
 !=======================================================================

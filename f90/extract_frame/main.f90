@@ -52,18 +52,18 @@ subroutine show_usage
 
   if (trim(f_ctrl) == "-h") then
     write(iw,'("&input_param")')
-    write(iw,'(" ftraj = ""inp.dcd"" ! input trajectory file (dcd or xtc)")')
-    write(iw,'(" fcv   = ""ts.dat""  ! time-series data")')
+    write(iw,'(" flist_traj = ""trajlist"" ! File that contains List of Traj")')
+    write(iw,'(" flist_cv   = ""cvlist""   ! File that contains List of CV")')
     write(iw,'("/")')
     write(iw,*)
     write(iw,'("&output_param")')
-    write(iw,'(" fhead = ""run"" ! output dcd file")')
+    write(iw,'(" fhead = ""run"" ! Header of Output files")')
     write(iw,'("/")')
     write(iw,*)
     write(iw,'("&option_param")')
-    write(iw,'(" dt   = 0.1d0 ")')
-    write(iw,'(" ndim = 2  ! dimension of time-series data")')
-    write(iw,'(" react_range = -5.0d0 5.0d0 1.0d0 0.0d0")')
+    !write(iw,'(" dt   = 0.1d0 ")')
+    write(iw,'(" ndim = 2  ! dimension of time-series CV data")')
+    write(iw,'(" extract_range = -5.0d0 5.0d0 1.0d0 0.0d0 ! CV range for frame extraction")')
     write(iw,'("/")')
     stop
   end if

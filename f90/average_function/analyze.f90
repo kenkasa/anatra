@@ -94,7 +94,7 @@ module mod_analyze
         do ifile = 1, nfile
           dev = dev + (cv(ifile)%data(1, istep) - ave)**2
         end do
-        dev   = sqrt(dev / (nfile - 1))
+        dev   = sqrt(dev / dble(nfile - 1))
         sterr = dev / sqrt(dble(nfile))
 
         func_ave(istep)   = ave

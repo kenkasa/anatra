@@ -47,6 +47,8 @@ module mod_ctrl
     logical :: use_conditional        = .false.
     integer :: ndim                   = 1
 
+    logical :: out_charge_density     = .false.
+
     logical :: use_weight             = .false.
     logical :: fit                    = .false.
 
@@ -127,7 +129,10 @@ module mod_ctrl
       ! used for restricted sdf
       logical                :: use_conditional         = .false.
       integer                :: ndim                    = 1
-      real(8)                :: react_range(2, NdimMax) = 0.0d0  
+      real(8)                :: react_range(2, NdimMax) = 0.0d0
+      ! used for QM/MM-MF
+      logical                :: out_charge_density      = .false. 
+
       ! used for spline
       logical                :: use_spline              = .false.
       integer                :: spline_resolution       = 4
@@ -153,6 +158,7 @@ module mod_ctrl
                               use_spline,             &
                               spline_resolution,      &
                               use_weight,             &
+                              out_charge_density,     &
                               count_threshold,        &
                               fit
 
@@ -161,31 +167,32 @@ module mod_ctrl
 
       write(iw,*)
       write(iw,'(">> Option section parameters")')
-      write(iw,'("mode              = ", a)')               trim(mode)
-      write(iw,'("ng3               = ", 3(i0,2x))')        (ng3(i),    i = 1, 3)
-      write(iw,'("del               = ", 3(f15.7,2x))')     (del(i),    i = 1, 3)
-      write(iw,'("origin            = ", 3(f15.7,2x))')     (origin(i), i = 1, 3)
+      write(iw,'("mode               = ", a)')             trim(mode)
+      write(iw,'("ng3                = ", 3(i0,2x))')      (ng3(i),    i = 1, 3)
+      write(iw,'("del                = ", 3(f15.7,2x))')   (del(i),    i = 1, 3)
+      write(iw,'("origin             = ", 3(f15.7,2x))')   (origin(i), i = 1, 3)
 
       if (use_pbcwrap) then
-        write(iw,'("use_pbcwrap       = ", a)')             get_tof(use_pbcwrap)
-        write(iw,'("centertype        = ", a)')             trim(centertype)
+        write(iw,'("use_pbcwrap        = ", a)')           get_tof(use_pbcwrap)
+        write(iw,'("centertype         = ", a)')           trim(centertype)
       end if
 
-      write(iw,'("use_weight          = ", a)')             get_tof(use_weight)
-      write(iw,'("use_conditional     = ", a)')             get_tof(use_conditional)
+      write(iw,'("use_weight         = ", a)')             get_tof(use_weight)
+      write(iw,'("use_conditional    = ", a)')             get_tof(use_conditional)
       if (use_conditional) then
-        write(iw,'("ndim             = ", i0)')             ndim
+        write(iw,'("ndim             = ", i0)')            ndim
         do i = 1, ndim
           write(iw,'(es15.7, " <= component ",i0," < ",es15.7)') &
                   react_range(1, i), i, react_range(2, i)
         end do 
       end if
 
-      write(iw,'("use_spline        = ", a)')               get_tof(use_spline)
-      write(iw,'("spline_resolution = ", i0)')              spline_resolution
+      write(iw,'("use_spline         = ", a)')             get_tof(use_spline)
+      write(iw,'("spline_resolution  = ", i0)')            spline_resolution
+      write(iw,'("out_charge_density = ", a)')             get_tof(out_charge_density)
 
-      write(iw,'("count_threshold     = ", e15.7)')         count_threshold
-      write(iw,'("fit                 = ", a)')             get_tof(fit) 
+      write(iw,'("count_threshold    = ", e15.7)')         count_threshold
+      write(iw,'("fit                = ", a)')             get_tof(fit) 
 
       iopt = get_opt(mode, CoMMode, ierr)
       if (ierr /= 0) then
@@ -222,6 +229,7 @@ module mod_ctrl
       option%spline_resolution     = spline_resolution
       option%count_threshold       = count_threshold
       option%fit                   = fit
+      option%out_charge_density    = out_charge_density
 
       if (option%fit) then
         write(iw,'("Read_Ctrl_Option> Remark")')

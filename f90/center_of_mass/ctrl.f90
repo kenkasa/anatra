@@ -26,6 +26,8 @@ module mod_ctrl
     real(8) :: dt        = 1.0d0
     real(8) :: t_sparse  = -1.0d0
     real(8) :: t_range   = -1.0d0
+    real(8) :: t_sta     = -1.0d0
+    real(8) :: t_end     = -1.0d0
     logical :: out_com   = .false. 
     logical :: out_msd   = .false.
     logical :: onlyz     = .false.
@@ -37,6 +39,8 @@ module mod_ctrl
     integer :: nstep     = 0
     integer :: nt_shift  = 0
     integer :: nt_range  = 0
+    integer :: nt_sta    = 0
+    integer :: nt_end    = 0
   end type s_option
 
   type :: s_timegrid
@@ -114,6 +118,8 @@ module mod_ctrl
       real(8)                :: dt        = 1.0d0
       real(8)                :: t_sparse  = -1.0d0
       real(8)                :: t_range   = -1.0d0
+      real(8)                :: t_sta     = -1.0d0
+      real(8)                :: t_end     = -1.0d0
 
       ! Parser 
       !
@@ -133,7 +139,9 @@ module mod_ctrl
                               msddim,      &
                               dt,          &
                               t_sparse,    &
-                              t_range
+                              t_range,     &
+                              t_sta,       &
+                              t_end
 
 
       rewind io
@@ -151,6 +159,8 @@ module mod_ctrl
       write(iw,'("dt        = ", f15.7)') dt
       write(iw,'("t_sparse  = ", f15.7)') t_sparse 
       write(iw,'("t_range   = ", f15.7)') t_range
+      write(iw,'("t_sta     = ", f15.7)') t_sta
+      write(iw,'("t_end     = ", f15.7)') t_end
 
       ! Get mode
       !
@@ -182,6 +192,8 @@ module mod_ctrl
       option%dt        = dt
       option%t_sparse  = t_sparse
       option%t_range   = t_range
+      option%t_sta     = t_sta
+      option%t_end     = t_end
 
       ! Check combinations
       !
@@ -194,6 +206,14 @@ module mod_ctrl
 
       option%nt_shift  = nint(option%t_sparse / option%dt)
       option%dt_out    = option%dt * option%nt_shift
+
+      option%nt_sta = 0
+      option%nt_end = 0
+      if (option%t_sta >= -1e-5 .and. option%t_end > 0.0d0) then
+        option%nt_sta = nint(option%t_sta / option%dt)
+        option%nt_end = nint(option%t_end / option%dt)
+        if (option%nt_sta == 0) option%nt_sta = 1
+      end if
 
       if (option%t_range > 0.0d0) then
         option%nt_range = nint(option%t_range / option%dt)

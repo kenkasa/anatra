@@ -37,6 +37,7 @@ proc show_usage {arglist} {
     puts "                   (default: site)>                                           \\"
     puts "  -mindist_type1   <mindist type for species 1 (site or com)                  \\"
     puts "                   (default: site)>                                           \\"
+    puts "  -weight_xyz      <weight factor for each component (default: 1 1 1)>        \\"
     puts "  -dt              <time step>                                                \\"
     puts "  -t_sta           <time at which analysis start (default: 0)>                \\"
     puts "  -t_end           <time at which analysis stop (default: 0 (till the end))>  \\"
@@ -82,10 +83,12 @@ proc define_optinfo {} {
   global opt
 
   set opt(fhead)          "out"
+  set opt(weight_xyz)     "1.0 1.0 1.0"
   set opt(dt)             0.1
   set opt(t_sta)          0.0
   set opt(t_end)          0.0
   set opt(pbc)            false
+  set opt(stride)         1
   set opt(distance_type)  "standard" 
   set opt(mindist_type0)  "site" 
   set opt(mindist_type1)  "site" 
@@ -103,6 +106,8 @@ proc read_optinfo {arglist} {
 
   set opt(fhead)         [parse_arguments $arglist \
       "-fhead"         "value" $opt(fhead)]
+  set opt(weight_xyz)    [parse_arguments $arglist \
+      "-weight_xyz"    "value" $opt(weight_xyz)]
   set opt(dt)            [parse_arguments $arglist \
       "-dt"            "value" $opt(dt)]
   set opt(t_sta)         [parse_arguments $arglist \
@@ -113,6 +118,8 @@ proc read_optinfo {arglist} {
       "-dt"            "value" $opt(dt)]
   set opt(pbc)           [parse_arguments $arglist \
       "-pbc"           "value" $opt(pbc)]
+  set opt(stride)        [parse_arguments $arglist \
+      "-stride"        "value" $opt(stride)]
   set opt(distance_type) [parse_arguments $arglist \
       "-distance_type" "value" $opt(distance_type)]
   set opt(mindist_type0) [parse_arguments $arglist \
@@ -134,10 +141,12 @@ proc show_optinfo {} {
 
   puts "<< option info >>"
   puts "fhead          = $opt(fhead)"
+  puts "weight_xyz     = $opt(weight_xyz)"
   puts "dt             = $opt(dt)"
   puts "t_sta          = $opt(t_sta)"
   puts "t_end          = $opt(t_end)"
   puts "pbc            = $opt(pbc)"
+  puts "stride         = $opt(stride)"
   puts "distance_type  = $opt(distance_type)"
   puts "mindist_type0  = $opt(mindist_type0)"
   puts "mindist_type1  = $opt(mindist_type1)"
@@ -263,8 +272,10 @@ proc analyze {} {
   puts $f "   mode           = \"$opt(mode0)\" \"$opt(mode1)\""
   puts $f "   distance_type  = \"$opt(distance_type)\""
   puts $f "   mindist_type   = \"$opt(mindist_type0)\" \"$opt(mindist_type1)\""
+  puts $f "   weight_xyz     = $opt(weight_xyz)"
   puts $f "   t_sta          = $opt(t_sta)"
   puts $f "   t_end          = $opt(t_end)"
+  puts $f "   stride         = $opt(stride)"
   puts $f " /"
   close $f
 

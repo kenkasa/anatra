@@ -94,7 +94,7 @@ module mod_tcf
       write(iw,*)
       write(iw,'("Get_TransTCF> Calculate 1st-order transition")')
 
-!$omp parallel private(ifile, imol, istep, jstep, it, is, js, nt, hist, norm, &
+!$omp parallel private(ifile, imol, istep, jstep, it, is, js, nt, hist, norm, nstep, &
 !$omp                  nthreads, thread_id, nwork, progress, ifinish),        &
 !$omp          default(shared)
       nthreads  = omp_get_num_threads()
@@ -110,8 +110,9 @@ module mod_tcf
           write(iw,'("  Progress : ", f6.2, "%")') progress
         end if
 
-        hist = 0.0d0
-        norm = 0.0d0
+        hist  = 0.0d0
+        norm  = 0.0d0
+        nstep = state(ifile)%nstep
 
         do imol = 1, nmol
 
@@ -135,6 +136,14 @@ module mod_tcf
                   hist(it, js, is) = hist(it, js, is) + 1.0d0
                   norm(it, is)     = norm(it, is)     + 1.0d0 
                 end do
+
+                if (option%use_zeropadding) then
+                  if (it < nt_range) then
+                    norm(it + 1 : nt_range, is)     = norm(it + 1:nt_range, is)     + 1.0d0 
+                    !hist(it + 1 : nt_range, js, is) = hist(it + 1:nt_range, js, is) + 1.0d0 
+                  end if
+                end if
+
               else if (option%tcf_mode == TcfModeRji) then
                 do jstep = istep, nt, option%nt_sparse 
                   it = it + 1

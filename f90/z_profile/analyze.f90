@@ -35,8 +35,8 @@ module mod_analyze
 
       ! I/O
       !
-      integer                :: io
-      character(len=MaxChar) :: fname 
+      integer                :: io, io_z
+      character(len=MaxChar) :: fname, fname_z 
 
       ! Local
       !
@@ -134,6 +134,12 @@ module mod_analyze
 
       ! Analyze
       !
+      if (option%out_z) then
+        write(fname_z, '(a,".zcrd")') trim(output%fhead)
+        call open_file(fname_z, io_z)
+      end if
+
+
       gz        = 0.0d0
       is_end    = .false.
       istep_tot = 0
@@ -167,6 +173,10 @@ module mod_analyze
 
           boxave(:) = boxave(:) + traj(ID_T)%box(:, 1)
 
+          if (option%out_z) then
+            write(io_z,'(i0,2x)', advance = 'no') istep_tot
+          end if
+
           do imol = 1, nmol
 
             if (option%mode(ID_C) == CoMModeWHOLE) then
@@ -182,6 +192,13 @@ module mod_analyze
 
             if (option%symmetrize .and. iz < 0) then
               iz = - iz 
+            end if
+
+            if (option%out_z) then
+              write(io_z,'(f20.13)', advance = 'no') zij
+              if (imol == nmol) then
+                write(io_z, *) 
+              end if 
             end if
 
             !if (iz > 0 .and. iz < nz) then 
@@ -224,6 +241,9 @@ module mod_analyze
       !
       deallocate(weight, gz)
 
+      if (option%out_z) then
+        close(io_z)
+      end if
 
     end subroutine analyze
 !-----------------------------------------------------------------------

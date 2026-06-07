@@ -395,7 +395,7 @@ proc tr_convert {} {
 
   # generate converted trajectory 
   #
-  if {$traj(totype) != "xtc"} {
+  if {$traj(totype) != "xtc" && $traj(totype) != "netcdf"} {
     animate write $traj(totype) \
                   $traj(to) \
                   beg 0 end -1 \

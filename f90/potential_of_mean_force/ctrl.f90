@@ -12,15 +12,21 @@ module mod_ctrl
 
   ! constants
   !
-  integer, parameter, public :: MaxDim   = 3
-  integer, parameter, public :: MaxState = 100 
-  integer, parameter, public :: MaxNcell = 100 
+  integer,      parameter, public :: MaxDim   = 3
+  integer,      parameter, public :: MaxState = 100 
+  integer,      parameter, public :: MaxNcell = 100
+                
+  integer,      parameter, public :: DiscretizeSchemeCenter  = 1 
+  integer,      parameter, public :: DiscretizeSchemeForward = 2
+  character(*), parameter, public :: DiscretizeSchemes(2) = (/'CENTER ', &
+                                                              'FORWARD'/)  
 
   ! structures
   !
 
   type :: s_option
 
+    integer :: discretize_scheme      = DiscretizeSchemeCenter
     logical :: use_bootstrap          = .false.
     logical :: gen_script_mpl2d       = .false.
     logical :: skip_calc              = .false.
@@ -28,6 +34,9 @@ module mod_ctrl
     ! Dimensionality
     integer :: ndim                   = MaxDim
     integer :: xyzcol(MaxDim)         = (/2, 3, 4/)
+
+    ! Normalization
+    real(8) :: norm_const             = -1.0d0
 
     ! Grid info.
     integer :: ng3(MaxDim)            = 100
@@ -82,6 +91,8 @@ module mod_ctrl
   !
   public  :: read_ctrl
   private :: read_ctrl_option
+  private :: show_input
+  private :: show_output
 
   contains
 
@@ -111,7 +122,11 @@ module mod_ctrl
       call open_file(f_ctrl, io, stat = 'old')
 
       call read_ctrl_input  (io, input)
+      call show_input(input)
+
       call read_ctrl_output (io, output)
+      call show_output(output)
+
       call read_ctrl_option (io, option)
 
       if (option%use_bootstrap) then
@@ -137,6 +152,8 @@ module mod_ctrl
 
       ! Local
       !
+      character(len=MaxChar) :: discretize_scheme = 'CENTER' 
+
       logical :: use_bootstrap              = .false.
       logical :: gen_script_mpl2d           = .false.
       logical :: skip_calc                  = .false.
@@ -144,11 +161,13 @@ module mod_ctrl
       integer :: ndim                       = 2
       integer :: xyzcol(MaxDim)             = (/1, 2, 3/)
 
+      real(8) :: norm_const                 = -1.0d0
+
       integer :: ng3(MaxDim)                = (/1, 1, 1/)
       real(8) :: del(MaxDim)                = (/1.0d0, 1.0d0, 1.0d0/) 
       real(8) :: origin(MaxDim)             = (/0.0d0, 0.0d0, 0.0d0/)
 
-      real(8) :: temperature                = 298.0d0
+      real(8) :: temperature                = 300.0d0
 
       logical :: use_spline                 = .false.
       integer :: spline_resolution          = 4
@@ -182,17 +201,23 @@ module mod_ctrl
       real(8) :: vr_normvec(3)              = (/1.0d0, 1.0d0, 1.0d0/)
       real(8) :: vr_cellpos(3, MaxNcell)    = 0.0d0
 
+      ! Parser 
+      !
+      integer :: iopt, ierr
+
       ! Dummy
       !
       integer :: i, j, k 
 
 
       namelist /option_param/   &
+        discretize_scheme,      &
         use_bootstrap,          &
         gen_script_mpl2d,       &
         skip_calc,              &
         ndim,                   &
         xyzcol,                 &
+        norm_const,             &
         ng3,                    &
         del,                    &
         origin,                 &
@@ -226,8 +251,11 @@ module mod_ctrl
 
       write(iw,*)
       write(iw,'(">> Option section parameters")')
+      write(iw,'("discretize_scheme = ", a)')               trim(discretize_scheme)
       write(iw,'("use_bootstrap     = ", a)')               get_tof(use_bootstrap) 
       write(iw,'("skip_calc         = ", a)')               get_tof(skip_calc)
+
+      write(iw,'("norm_const        = ", f15.7)')           norm_const
 
       write(iw,'("ndim              = ", i0)')              ndim 
       write(iw,'("xyzcol            = ", 3(i0,2x))')        (xyzcol(i), i = 1, ndim)
@@ -279,6 +307,15 @@ module mod_ctrl
 
       end if
 
+      ! Get Discretize_scheme 
+      !
+      iopt = get_opt(discretize_scheme, DiscretizeSchemes, ierr)
+      if (ierr /= 0) then
+        write(iw,'("Read_Ctrl_Option> Error.")')
+        write(iw,'("discretize_scheme = ",a," is not available.")') trim(discretize_scheme)
+        stop
+      end if
+      option%discretize_scheme = iopt
 
       ! Memory allocation
       !
@@ -298,6 +335,9 @@ module mod_ctrl
       !   Dimensionality
       option%ndim                        = ndim
       option%xyzcol(1:ndim)              = xyzcol(1:ndim)
+
+      !
+      option%norm_const                  = norm_const
 
       !   Grid
       option%ng3(1:ndim)                 = ng3(1:ndim)
@@ -392,6 +432,67 @@ module mod_ctrl
 
 
     end subroutine read_ctrl_option
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine show_input(input)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_input), intent(in) :: input
+
+      ! Dummy
+      !
+      integer :: i
+
+      ! Check
+      !
+      if (input%ncv  == 0) then
+        write(iw,'("Error. fcv should be specified.")')
+        stop
+      end if
+
+      ! Print
+      !
+      write(iw,*)
+      write(iw,'(">> Input section parameters")')
+      do i = 1, input%ncv
+        write(iw,'("fcv", 3x, i0, 3x, " = ", a)') i, trim(input%fcv(i))
+      end do
+
+      if (trim(input%flist_weight) /= '') then
+        do i = 1, input%ncv
+          write(iw,'("fweight", 3x, i0, 3x, " = ", a)') i, trim(input%fweight(i))
+        end do
+      end if
+
+
+    end subroutine show_input
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+    subroutine show_output(output)
+!-----------------------------------------------------------------------
+      implicit none
+
+      type(s_output), intent(in) :: output 
+
+
+      ! Check
+      !
+      if (trim(output%fhead) == '') then
+        write(iw,'("Error. fhead should be specified.")')
+        stop
+      end if
+
+      ! Print
+      !
+      write(iw,*)
+      write(iw,'(">> Output section parameters")')
+      write(iw,'("fhead          = ", a)') trim(output%fhead)
+
+
+    end subroutine show_output
 !-----------------------------------------------------------------------
 
 !-----------------------------------------------------------------------

@@ -2,8 +2,8 @@ HOME=.
 LIB=../lib
 XDRLIB=../lib/external/xdr-interface-fortran/xdrfile-1.1.4/lib
 XDRINTERFACE=../lib/external/xdr-interface-fortran
-NCLIB=../lib/external/netcdf/netcdf/lib
-NCINC=../lib/external/netcdf/netcdf/include
+NCLIB=$(realpath ../lib/external/netcdf/netcdf/lib)
+NCINC=$(realpath ../lib/external/netcdf/netcdf/include)
 EXEF=lipid_order.x
 TRGT=lipid_order
 
@@ -51,7 +51,7 @@ OBJ=$(XDRINTERFACE)/xdr.F90 \
     $(HOME)/main.f90
 
 $(TRGT) : $(OBJ) 
-	$(FC) $(FFLAGS) -o $(EXEF) $(OBJ) -L $(XDRLIB) -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff
+	$(FC) $(FFLAGS) -o $(EXEF) $(OBJ) -L $(XDRLIB) -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff -Wl,-rpath,$(NCLIB)
 	mkdir -p ../bin
 	cp $(EXEF) ../bin/
 	rm -f *.mod

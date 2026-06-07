@@ -695,7 +695,7 @@ module mod_catcrd_analyze
         do istep = 1, nstep
           istep_tot = istep_tot + 1
 
-          if (mod(istep_tot, 100) == 0) then
+          if (mod(istep_tot, 1000) == 0) then
             write(iw,'("Read step ", i0)') istep_tot
           end if
 
@@ -722,7 +722,6 @@ module mod_catcrd_analyze
 
                 box(1:3, 1)   = nc_in%box(1:3, 1)
                 angle(1:3, 1) = 90.0d0
-                write(iw,'("WRITE")') 
                 retval =  nf90_put_var(iunit_out, var_coords, coord(1:3, 1:natm, 1), start = start,     count = count)
                 retval =  nf90_put_var(iunit_out, var_box,    box(1:3, 1),           start = start_box, count = count_box) 
                 retval =  nf90_put_var(iunit_out, var_angle,  angle(1:3, 1),         start = start_box, count = count_box) 

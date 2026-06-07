@@ -14,19 +14,19 @@ module mod_input
   type :: s_input
 
     integer                :: ntraj
-    character(len=MaxChar) :: ftraj(MaxTraj)
+    character(len=MaxChar), allocatable :: ftraj(:)
     character(len=MaxChar) :: flist_traj
 
     integer                :: ncv
-    character(len=MaxChar) :: fcv(MaxTraj)
+    character(len=MaxChar), allocatable :: fcv(:)
     character(len=MaxChar) :: flist_cv
 
     integer                :: nweight
-    character(len=MaxChar) :: fweight(MaxTraj)
+    character(len=MaxChar), allocatable :: fweight(:)
     character(len=MaxChar) :: flist_weight
 
     integer                :: nprof
-    character(len=MaxChar) :: fprof(MaxTraj)
+    character(len=MaxChar), allocatable :: fprof(:)
     character(len=MaxChar) :: flist_prof
 
     character(len=MaxChar) :: fdx
@@ -53,16 +53,16 @@ module mod_input
 
       ! Local
       !
-      character(len=MaxChar) :: ftraj(1:MaxTraj)   = ''
+      character(len=MaxChar), allocatable :: ftraj(:) 
       character(len=MaxChar) :: flist_traj         = ''
 
-      character(len=MaxChar) :: fcv(1:MaxTraj)     = ''
+      character(len=MaxChar), allocatable :: fcv(:)
       character(len=MaxChar) :: flist_cv           = ''
 
-      character(len=MaxChar) :: fweight(1:MaxTraj) = ''
+      character(len=MaxChar), allocatable :: fweight(:)
       character(len=MaxChar) :: flist_weight       = ''
 
-      character(len=MaxChar) :: fprof(1:MaxTraj)   = ''
+      character(len=MaxChar), allocatable :: fprof(:)
       character(len=MaxChar) :: flist_prof         = ''
 
       character(len=MaxChar) :: fdx                = ''
@@ -126,6 +126,17 @@ module mod_input
 
       fdx          = ''
 
+      ! Allocate work space
+      !
+      allocate(ftraj  (1:MaxTraj))
+      allocate(fcv    (1:MaxTraj))
+      allocate(fweight(1:MaxTraj))
+      allocate(fprof  (1:MaxTraj))
+      ftraj   = ''
+      fcv     = ''
+      fweight = ''
+      fprof   = ''
+
       ! Read INPUT_PARAM namelist
       !
       rewind iunit
@@ -135,6 +146,13 @@ module mod_input
       call setup_filelist(fcv,     flist_cv,     ncv)
       call setup_filelist(fweight, flist_weight, nweight)
       call setup_filelist(fprof,   flist_prof,   nprof)
+
+      ! Allocate arrays in input structure
+      !
+      allocate(input%ftraj   (1:MaxTraj))
+      allocate(input%fcv     (1:MaxTraj))
+      allocate(input%fweight (1:MaxTraj))
+      allocate(input%fprof   (1:MaxTraj))
 
       ! Send values in input parameters to input structure
       !
@@ -161,6 +179,10 @@ module mod_input
 
       input%fanaparm     = fanaparm
       input%fanaparm2    = fanaparm2
+
+      ! Deallocate work space
+      !
+      deallocate(ftraj, fcv, fweight, fprof)
 
     end subroutine read_ctrl_input
 !-----------------------------------------------------------------------

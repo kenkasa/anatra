@@ -24,7 +24,16 @@ module mod_ctrl
     integer :: mode(2)       = (/CoMModeRESIDUE, CoMModeRESIDUE/)
     logical :: identical     = .false.
     logical :: normalize     = .false.
-    logical :: separate_self = .false. 
+    logical :: separate_self = .false.
+
+    real(8) :: dt            = 1.0d0
+    real(8) :: t_sta         = -1.0d0
+    real(8) :: t_end         = -1.0d0 
+
+    ! prepared after reading namelists
+    !
+    integer :: nt_sta        = 0
+    integer :: nt_end        = 0
   end type s_option
 
   ! subroutines
@@ -88,6 +97,10 @@ module mod_ctrl
       logical                :: normalize     = .false.
       logical                :: separate_self = .false.
 
+      real(8)                :: dt            =  1.0d0
+      real(8)                :: t_sta         = -1.0d0
+      real(8)                :: t_end         = -1.0d0
+
       ! Parser
       !
       integer :: iopt, ierr
@@ -101,7 +114,10 @@ module mod_ctrl
         mode,                 &
         identical,            &
         normalize,            &
-        separate_self
+        separate_self,        &
+        dt,                   &
+        t_sta,                &
+        t_end
 
 
       rewind io
@@ -114,6 +130,9 @@ module mod_ctrl
       write(iw,'("identical     = ", a)')       get_tof(identical)
       write(iw,'("normalize     = ", a)')       get_tof(normalize)
       write(iw,'("separate_self = ", a)')       get_tof(separate_self)
+      write(iw,'("dt            = ", f15.7)')   dt
+      write(iw,'("t_sta         = ", f15.7)')   t_sta
+      write(iw,'("t_end         = ", f15.7)')   t_end
 
       do itraj = 1, 2
         iopt = get_opt(mode(itraj), CoMMode, ierr)
@@ -129,9 +148,22 @@ module mod_ctrl
       option%identical     = identical
       option%normalize     = normalize
       option%separate_self = separate_self
+      option%dt            = dt
+      option%t_sta         = t_sta
+      option%t_end         = t_end
 
       ! Combination check
       !
+
+      ! Convert from real to integer
+      !
+      option%nt_sta = 0
+      option%nt_end = 0
+      if (option%t_sta >= -1e-5 .and. option%t_end > 0.0d0) then
+        option%nt_sta = nint(option%t_sta / option%dt)
+        option%nt_end = nint(option%t_end / option%dt)
+        if (option%nt_sta == 0) option%nt_sta = 1
+      end if
 
     end subroutine read_ctrl_option
 !-----------------------------------------------------------------------

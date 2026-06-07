@@ -45,6 +45,7 @@ proc show_usage {arglist} {
     puts "                     (true or false) (default: false)                                          \\"
     puts "  -use_conditional   <whether conditional sampling is used or not>                             \\"
     puts "                     (true or false) (default: false)                                          \\"
+    puts "  -out_charge_density <whether charge distribution is outputted or not> \\"
     puts "  -ndim              <dimensions of reaction coords (neccesary if use_conditional is true)>    \\"
     puts "  -react_range       <range of sampled reaction coords (neccesary if use_conditional is true)> \\"
     puts "  -fit               <fit is performed or not (true or false)>                                 \\"
@@ -57,19 +58,20 @@ proc show_usage {arglist} {
     puts ""
     puts "Usage:"
     puts "anatra spatial_distr                         \\"
-    puts "  -stype             parm7                   \\"
-    puts "  -sfile             str.prmtop              \\"
-    puts "  -tintype           dcd                     \\"
-    puts "  -tin               inp.dcd                 \\"
-    puts "  -fhead             out                     \\"
-    puts "  -sel0              not water               \\"
-    puts "  -mode              residue                 \\"
-    puts "  -ng3               50 50 50                \\"
-    puts "  -del               0.4 0.4 0.4             \\"
-    puts "  -origin            0.0 0.0 0.0             \\"
-    puts "  -use_spline        false                   \\"
-    puts "  -spline_resolution 4                       \\"
-    puts "  -prep_only         false"
+    puts "  -stype              parm7                   \\"
+    puts "  -sfile              str.prmtop              \\"
+    puts "  -tintype            dcd                     \\"
+    puts "  -tin                inp.dcd                 \\"
+    puts "  -fhead              out                     \\"
+    puts "  -sel0               not water               \\"
+    puts "  -mode               residue                 \\"
+    puts "  -ng3                50 50 50                \\"
+    puts "  -del                0.4 0.4 0.4             \\"
+    puts "  -origin             0.0 0.0 0.0             \\"
+    puts "  -use_spline         false                   \\"
+    puts "  -spline_resolution  4                       \\"
+    puts "  -out_charge_density true                   \\"
+    puts "  -prep_only          false"
     puts ""
     exit
   }
@@ -100,6 +102,7 @@ proc define_optinfo {} {
   set opt(flist_weight)      ""
   set opt(use_spline)        false 
   set opt(spline_resolution) 4 
+  set opt(out_charge_density) false 
   set opt(count_threshold)   1.0e-10
   set opt(fit)               false
   set opt(refpdb)            ""
@@ -154,6 +157,10 @@ proc read_optinfo {arglist} {
       "-use_spline"               "value" $opt(use_spline)]
   set opt(spline_resolution)    [parse_arguments $arglist \
       "-spline_resolution"        "value" $opt(spline_resolution)]
+  set opt(out_charge_density)   [parse_arguments $arglist \
+      "-out_charge_density"       "value" $opt(out_charge_density)]
+  set opt(spline_resolution)    [parse_arguments $arglist \
+      "-spline_resolution"        "value" $opt(spline_resolution)]
   set opt(count_threshold)      [parse_arguments $arglist \
       "-count_threshold"          "value" $opt(count_threshold)]
   set opt(fit)                  [parse_arguments $arglist \
@@ -196,6 +203,7 @@ proc show_optinfo {} {
   puts "flist_weight      = $opt(flist_weight)"
   puts "use_spline        = $opt(use_spline)"
   puts "spline_resolution = $opt(spline_resolution)"
+  puts "out_charge_density= $opt(out_charge_density)"
   puts "count_threshold   = $opt(count_threshold)"
   puts "fit               = $opt(fit)"
   puts "fitselid          = $opt(fitselid)"
@@ -356,6 +364,7 @@ proc analyze {} {
   puts $f "   react_range       = $opt(react_range)"
   puts $f "   use_spline        = .$opt(use_spline)."
   puts $f "   spline_resolution = $opt(spline_resolution)"
+  puts $f "   out_charge_density= .$opt(out_charge_density)."
   puts $f "   count_threshold   = $opt(count_threshold)"
   puts $f "   fit               = .$opt(fit)."
   puts $f "   "

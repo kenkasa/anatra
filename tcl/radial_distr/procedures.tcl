@@ -20,30 +20,33 @@ proc show_usage {arglist} {
 
   if {$help} {
     puts "Usage:"
-    puts "anatra radial_distr                                                           \\"
-    puts "  -stype         <structure file type>                                        \\"
-    puts "  -sfile         <structure file name>                                        \\"
-    puts "  -tintype       <input trajectory file type>                                 \\"
-    puts "  -tin           <input trajectory file name>                                 \\"
-    puts "  -flist_traj    <trajectory file list (neccesary if tin is not specified)>   \\"
-    puts "  -fhead         <header of output file name>                                 \\"
-    puts "  -sel0          <VMD selection> (X=0,1,2...)                                 \\"
-    puts "  -sel1          <VMD selection> (X=0,1,2...)                                 \\"
-    puts "  -mode0         <analysis mode of sel0>                                      \\"
-    puts "                 (residue or whole or atom)                                   \\"
-    puts "                 (default: residue)>                                          \\"
-    puts "  -mode1         <analysis mode of sel1>                                      \\"
-    puts "                 (residue or whole or atom)                                   \\"
-    puts "                 (default: residue)                                           \\"
-    puts "  -dr            <delta r (angstrom)>                                         \\"
-    puts "  -identical     <true or false>                                              \\"
-    puts "                 (default: false)                                             \\"
-    puts "  -normalize     <true or false>                                              \\"
-    puts "                 (default: false)                                             \\"
-    puts "  -separate_self <true or false>                                              \\"
-    puts "                 (default: false)                                             \\"
-    puts "  -prep_only     <whethere analysis is performed or not>                      \\"
-    puts "                 (true or false)                                              \\"
+    puts "anatra radial_distr                                                                  \\"
+    puts "  -stype         <structure file type>                                               \\"
+    puts "  -sfile         <structure file name>                                               \\"
+    puts "  -tintype       <input trajectory file type>                                        \\"
+    puts "  -tin           <input trajectory file name>                                        \\"
+    puts "  -flist_traj    <trajectory file list (neccesary if tin is not specified)>          \\"
+    puts "  -fhead         <header of output file name>                                        \\"
+    puts "  -sel0          <VMD selection> (X=0,1,2...)                                        \\"
+    puts "  -sel1          <VMD selection> (X=0,1,2...)                                        \\"
+    puts "  -mode0         <analysis mode of sel0>                                             \\"
+    puts "                 (residue or whole or atom)                                          \\"
+    puts "                 (default: residue)>                                                 \\"
+    puts "  -mode1         <analysis mode of sel1>                                             \\"
+    puts "                 (residue or whole or atom)                                          \\"
+    puts "                 (default: residue)                                                  \\"
+    puts "  -dr            <delta r (angstrom)>                                                \\"
+    puts "  -identical     <true or false>                                                     \\"
+    puts "                 (default: false)                                                    \\"
+    puts "  -normalize     <true or false>                                                     \\"
+    puts "                 (default: false)                                                    \\"
+    puts "  -separate_self <true or false>                                                     \\"
+    puts "                 (default: false)                                                    \\"
+    puts "  -dt            <time interval (used if t_sta and t_end are specified, default: 1)> \\"
+    puts "  -t_sta         <Time of first frame to read traj (optional)>                       \\"
+    puts "  -t_end         <Time of last  frame to read traj (optional)>                       \\"
+    puts "  -prep_only     <whethere analysis is performed or not>                             \\"
+    puts "                 (true or false)                                                     \\"
     puts "                 (default: false)>"
     puts ""  
     puts "Usage:"
@@ -82,6 +85,9 @@ proc define_optinfo {} {
   set opt(identical)      false
   set opt(normalize)      true 
   set opt(separate_self)  false
+  set opt(dt)             1.0 
+  set opt(t_sta)         -1.0
+  set opt(t_end)         -1.0
 }
 #-------------------------------------------------------------------------------
 
@@ -105,6 +111,12 @@ proc read_optinfo {arglist} {
       "-normalize"  "value" $opt(normalize)]
   set opt(separate_self) [parse_arguments $arglist \
       "-separate_self"  "value" $opt(separate_self)]
+  set opt(dt)        [parse_arguments $arglist \
+      "-dt"         "value" $opt(dt)]
+  set opt(t_sta)     [parse_arguments $arglist \
+      "-t_sta"      "value" $opt(t_sta)]
+  set opt(t_end)     [parse_arguments $arglist \
+      "-t_end"      "value" $opt(t_end)]
 }
 #-------------------------------------------------------------------------------
 
@@ -122,6 +134,9 @@ proc show_optinfo {} {
   puts "identical      = $opt(identical)"
   puts "normalize      = $opt(normalize)"
   puts "separate_self  = $opt(separate_self)"
+  puts "dt             = $opt(dt)"
+  puts "t_sta          = $opt(t_sta)"
+  puts "t_end          = $opt(t_end)"
   puts ""
 
 }
@@ -243,6 +258,9 @@ proc analyze {} {
   puts $f "   identical = .$opt(identical)."
   puts $f "   normalize = .$opt(normalize)."
   puts $f "   separate_self = .$opt(separate_self)."
+  puts $f "   dt        = $opt(dt)"
+  puts $f "   t_sta     = $opt(t_sta)"
+  puts $f "   t_end     = $opt(t_end)"
   puts $f " /"
   close $f
 

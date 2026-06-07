@@ -1,4 +1,4 @@
-# ANATRA 1.0.1
+# ANATRA 1.0.2
 
 [Manual (English)](./docs/anatra_manual_en.pdf)  
 [Manual (Japanese)](./docs/anatra_manual_jpn.pdf)
@@ -65,6 +65,57 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 This program has been developed with dependencies on several external libraries, which are included in the package.  
 Each of these libraries is subject to its own license terms as described below.
+
+* **HDF5 (Hierarchical Data Format 5) Software Library and Utilities**  
+    Copyright 2006 by The HDF Group.
+
+    NCSA HDF5 (Hierarchical Data Format 5) Software Library and Utilities  
+    Copyright 1998-2006 by The Board of Trustees of the University of Illinois.
+
+    All rights reserved.
+    
+    This software library and utilities is covered by the 3-clause BSD License.
+    
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted for any purpose (including commercial purposes)
+    provided that the following conditions are met:
+    
+    1. Redistributions of source code must retain the above copyright notice,
+       this list of conditions, and the following disclaimer.
+    
+    2. Redistributions in binary form must reproduce the above copyright notice,
+       this list of conditions, and the following disclaimer in the documentation
+       and/or materials provided with the distribution.
+    
+    3. Neither the name of The HDF Group, the name of the University, nor the
+       name of any Contributor may be used to endorse or promote products derived
+       from this software without specific prior written permission from
+       The HDF Group, the University, or the Contributor, respectively.
+
+    DISCLAIMER:
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+    OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    
+    For further details, please refer to the full license text available
+    at https://opensource.org/licenses/bsd-3-clause
+    
+    You are under no obligation whatsoever to provide any bug fixes, patches, or
+    upgrades to the features, functionality or performance of the source code
+    ("Enhancements") to anyone; however, if you choose to make your Enhancements
+    available either publicly, or directly to The HDF Group, without imposing a
+    separate written license agreement for such Enhancements, then you hereby
+    grant the following license: a non-exclusive, royalty-free perpetual license
+    to install, use, modify, prepare derivative works, incorporate into other
+    computer software, distribute, and sublicense such enhancements or derivative
+    works thereof, in binary and source code form.
 
 * **NetCDF**  
     Copyright 2025 Unidata

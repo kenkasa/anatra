@@ -64,6 +64,7 @@ module mod_analyze
       integer                :: ngrids_count
       real(8)                :: dv, val, vol, vol_count, boxave(3)
       real(8)                :: d(3), d2, shift(3)
+      real(8)                :: x, y, z
       logical                :: is_inside
 
       integer                :: trajtype
@@ -88,6 +89,7 @@ module mod_analyze
       type(s_state), allocatable :: state
 
       integer,    allocatable :: state_tr(:, :)
+      real(8),    allocatable :: charge(:)
 
 
       ! Setup parameters
@@ -137,6 +139,21 @@ module mod_analyze
                   myrank = 0)
 
       nmol = com%nmol
+
+      if (option%out_charge_density) then
+
+        if (nmol /= traj(1)%natm) then
+          write(iw,'("Analyze> Error.")')
+          write(iw,'("nmol and natm in selection 0 should be the same if out_charge_density = .true.")')
+          write(iw,'("Please modify mode0 to ATOM.")')
+          stop
+        end if
+
+        allocate(charge(nmol))
+
+        charge(:) = traj(1)%charge(:)
+
+      end if
 
       ! Start main calculation
       !
@@ -259,7 +276,8 @@ module mod_analyze
                            weight,          &
                            g0,              &
                            weight_sum,      &
-                           weight_sum_reac)
+                           weight_sum_reac, &
+                           charge)
 
           boxave(:) = boxave(:) + traj(1)%box(:, 1)
         end do
@@ -352,9 +370,34 @@ module mod_analyze
       if (option%use_spline) then
         write(fname,'(a,"_g_spline")') trim(output%fhead)
         call write_dx(fname, g1) 
-      end if 
+      end if
+
+
+      ! generate average chage value at each grid point
+      !
+      if (option%out_charge_density) then
+        write(fname,'(a,".grid_charge")') trim(output%fhead)
+        call open_file(fname, io)
+        do igz = 1, option%ng3(3)
+          z = option%origin(3) + option%del(3) * (igz - 1) 
+          do igy = 1, option%ng3(2)
+            y = option%origin(2) + option%del(2) * (igy - 1) 
+            do igx = 1, option%ng3(1)
+              x = option%origin(1) + option%del(1) * (igx - 1) 
+              val = g0%data(igx, igy, igz) * dv 
+              if (abs(val) >= 1.0d-10) & 
+                write(io, '(4(e15.7,2x))') x, y, z, val
+            end do
+          end do
+        end do
+        close(io)
+      end if
 
       !deallocate(molid, mtot, com)
+
+      if (option%out_charge_density) then
+        deallocate(charge)
+      end if
 
     end subroutine analyze
 !-----------------------------------------------------------------------
@@ -466,7 +509,8 @@ module mod_analyze
                                        weight,                         &
                                        g0,                             &
                                        weight_sum,                     &
-                                       weight_sum_reac)
+                                       weight_sum_reac,                &
+                                       charge)
 !-----------------------------------------------------------------------
       implicit none
 
@@ -479,35 +523,63 @@ module mod_analyze
       type(s_func3d),       intent(inout) :: g0
       real(8),              intent(inout) :: weight_sum
       real(8),              intent(inout) :: weight_sum_reac
+      real(8), optional,    intent(in)    :: charge(:)
 
 
       ! Restricted Sampling
       !
       if (option%use_conditional) then
 
-        call update_hist_restriction(option,          &
-                                     com,             &
-                                     state_tr,        &
-                                     istep,           &
-                                     nmol,            &
-                                     weight,          &
-                                     g0,              &
-                                     weight_sum,      &
-                                     weight_sum_reac)
+        if (present(charge)) then
+          call update_hist_restriction(option,          &
+                                       com,             &
+                                       state_tr,        &
+                                       istep,           &
+                                       nmol,            &
+                                       weight,          &
+                                       g0,              &
+                                       weight_sum,      &
+                                       weight_sum_reac, &
+                                       charge)
+        else
+          call update_hist_restriction(option,          &
+                                       com,             &
+                                       state_tr,        &
+                                       istep,           &
+                                       nmol,            &
+                                       weight,          &
+                                       g0,              &
+                                       weight_sum,      &
+                                       weight_sum_reac)
+        end if
 
 
       ! Normal Sampling
       !
       else
-        call update_hist_normal     (option,          &
-                                     com,             &
-                                     state_tr,        &
-                                     istep,           &
-                                     nmol,            &
-                                     weight,          &
-                                     g0,              &
-                                     weight_sum,      &
-                                     weight_sum_reac)
+
+        if (present(charge)) then
+          call update_hist_normal     (option,          &
+                                       com,             &
+                                       state_tr,        &
+                                       istep,           &
+                                       nmol,            &
+                                       weight,          &
+                                       g0,              &
+                                       weight_sum,      &
+                                       weight_sum_reac, &
+                                       charge)
+        else
+          call update_hist_normal     (option,          &
+                                       com,             &
+                                       state_tr,        &
+                                       istep,           &
+                                       nmol,            &
+                                       weight,          &
+                                       g0,              &
+                                       weight_sum,      &
+                                       weight_sum_reac)
+        end if
 
       end if
 
@@ -523,7 +595,8 @@ module mod_analyze
                                        weight,                         &
                                        g0,                             &
                                        weight_sum,                     &
-                                       weight_sum_reac)
+                                       weight_sum_reac,                &
+                                       charge)
 !-----------------------------------------------------------------------
       implicit none
 
@@ -536,24 +609,39 @@ module mod_analyze
       type(s_func3d),       intent(inout) :: g0
       real(8),              intent(inout) :: weight_sum
       real(8),              intent(inout) :: weight_sum_reac
+      real(8), optional,    intent(in)    :: charge(:)
 
       integer :: id, ixyz, gind(1:3)
       real(8) :: val
       logical :: is_inside
+
+      ! Arrays
+      !
+      real(8), allocatable, save :: q(:) 
+
+
+      if (.not. allocated(q)) then
+        allocate(q(nmol))
+        q = 1.0d0
+        if (present(charge))  then
+          q = charge
+        end if
+      end if
 
       do id = 1, nmol 
           weight_sum = weight_sum + weight
           is_inside = .true.
           do ixyz = 1, 3 
             val        = com%coord(ixyz, id, 1) 
-            gind(ixyz) = (val - option%origin(ixyz)) / option%del(ixyz) + 1
+            !gind(ixyz) = (val - option%origin(ixyz)) / option%del(ixyz) + 1
+            gind(ixyz) = nint((val - option%origin(ixyz)) / option%del(ixyz)) + 1
             if (gind(ixyz) < 1 .or. gind(ixyz) > option%ng3(ixyz)) then
               is_inside = .false.
             end if
           end do
       
           if (is_inside) then
-            g0%data(gind(1), gind(2), gind(3)) = g0%data(gind(1), gind(2), gind(3)) + weight 
+            g0%data(gind(1), gind(2), gind(3)) = g0%data(gind(1), gind(2), gind(3)) + weight * q(id) 
           end if
 
       end do
@@ -571,7 +659,8 @@ module mod_analyze
                                        weight,                         &
                                        g0,                             &
                                        weight_sum,                     &
-                                       weight_sum_reac)
+                                       weight_sum_reac,                &
+                                       charge)
 !-----------------------------------------------------------------------
       implicit none
 
@@ -584,11 +673,24 @@ module mod_analyze
       type(s_func3d),       intent(inout) :: g0
       real(8),              intent(inout) :: weight_sum
       real(8),              intent(inout) :: weight_sum_reac
+      real(8), optional,    intent(in)    :: charge(:)
 
       integer :: id, ixyz, gind(1:3)
       real(8) :: val
       logical :: is_inside
 
+      ! Arrays
+      !
+      real(8), allocatable, save :: q(:)
+
+
+      if (.not. allocated(q)) then
+        allocate(q(nmol))
+        q = 1.0d0
+        if (present(charge))  then
+          q = charge
+        end if
+      end if
 
       do id = 1, nmol
 
@@ -601,7 +703,7 @@ module mod_analyze
 
           do ixyz = 1, 3 
             val        = com%coord(ixyz, id, 1)
-            gind(ixyz) = (val - option%origin(ixyz)) / option%del(ixyz) + 1
+            gind(ixyz) = nint((val - option%origin(ixyz)) / option%del(ixyz)) + 1
 
             if (gind(ixyz) < 1 .or. gind(ixyz) > option%ng3(ixyz)) then
               is_inside = .false.
@@ -610,7 +712,7 @@ module mod_analyze
          
           if (is_inside) then
             g0%data(gind(1), gind(2), gind(3)) &
-              = g0%data(gind(1), gind(2), gind(3)) + weight 
+              = g0%data(gind(1), gind(2), gind(3)) + weight * q(id) 
           end if
         end if
 

@@ -2,8 +2,8 @@ HOME=.
 LIB=../../f90/lib
 XDRLIB=$(LIB)/external/xdr-interface-fortran/xdrfile-1.1.4/lib
 XDRINTERFACE=$(LIB)/external/xdr-interface-fortran
-NCLIB=$(LIB)/external/netcdf/netcdf/lib
-NCINC=$(LIB)/external/netcdf/netcdf/include
+NCLIB=$(realpath $(LIB)/external/netcdf/netcdf/lib)
+NCINC=$(realpath $(LIB)/external/netcdf/netcdf/include)
 EXEF=catcrd
 TRGT=catcrd
 
@@ -15,18 +15,18 @@ chk_gfort := $(shell which gfortran >/dev/null 2>&1 && echo 1 || echo 0)
 
 
 ifeq ($(FC),ifort)
-	FFLAGS = -qopenmp
+	FFLAGS = -qopenmp -mcmodel=medium
 else ifeq ($(FC),ifx)
-	FFLAGS = -qopenmp
+	FFLAGS = -qopenmp -mcmodel=medium
 else ifeq ($(FC),gfortran)
 	FFLAGS = -fopenmp
 else
 	ifeq ($(chk_ifort),1)
 		FC     = ifort
-		FFLAGS = -qopenmp
+		FFLAGS = -qopenmp -mcmodel=large
 	else ifeq ($(chk_ifx),1)
 		FC     = ifx
-		FFLAGS = -qopenmp
+		FFLAGS = -qopenmp -mcmodel=large
 	else ifeq ($(chk_gfort),1)
 		FC     = gfortran
 		FFLAGS = -fopenmp
@@ -48,7 +48,7 @@ OBJ=${XDRINTERFACE}/xdr.F90      \
     ${HOME}/catcrd.f90
 
 $(TRGT) : $(OBJ) 
-	$(FC) $(FFLAGS) -o $(EXEF) $(OBJ) -L $(XDRLIB) -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff
+	$(FC) $(FFLAGS) -o $(EXEF) $(OBJ) -L $(XDRLIB) -lxdrfile -L $(NCLIB) -I $(NCINC) -lnetcdf -lnetcdff -Wl,-rpath,$(NCLIB)
 	mkdir -p ../../bin
 	cp $(EXEF) ../../bin/
 	rm -f *.mod

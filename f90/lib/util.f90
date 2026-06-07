@@ -23,7 +23,7 @@ module mod_util
 
   contains
 !-----------------------------------------------------------------------
-    subroutine open_file(fname, iunit, frmt, stat)
+    subroutine open_file(fname, iunit, frmt, stat, pos)
 !-----------------------------------------------------------------------
       implicit none
 
@@ -31,9 +31,24 @@ module mod_util
       integer,                intent(out) :: iunit
       character(*), optional, intent(in)  :: frmt
       character(*), optional, intent(in)  :: stat 
+      character(*), optional, intent(in)  :: pos
 
       integer :: i
       logical :: chk
+
+      character(len=MaxChar) :: frmtv
+      character(len=MaxChar) :: posv
+      character(len=MaxChar) :: statv
+
+
+      frmtv = 'FORMATTED'
+      if (present(frmt)) frmtv = trim(frmt) 
+
+      posv  = 'REWIND'
+      if (present(pos))  posv  = trim(pos)
+
+      statv = 'UNKNOWN'
+      if (present(stat)) statv = trim(stat) 
 
       iunit = 10
       do i = 1, 99
@@ -42,19 +57,25 @@ module mod_util
           iunit = iunit + 1
         else
 
-          if (present(frmt)) then
-            if (present(stat)) then
-              open(iunit, file=trim(fname), form=trim(frmt), status=trim(stat))
-            else
-              open(iunit, file=trim(fname), form=trim(frmt))
-            end if
-          else
-            if (present(stat)) then
-              open(iunit, file=trim(fname), status=trim(stat))
-            else
-              open(iunit, file=trim(fname))
-            end if
-          end if
+          open(iunit,                  &
+               file     = trim(fname), &
+               form     = trim(frmtv), &
+               status   = trim(statv), &
+               position = trim(posv))
+
+          !if (present(frmt)) then
+          !  if (present(stat)) then
+          !    open(iunit, file=trim(fname), form=trim(frmt), status=trim(stat), position=trim(posv))
+          !  else
+          !    open(iunit, file=trim(fname), form=trim(frmt), position=trim(posv))
+          !  end if
+          !else
+          !  if (present(stat)) then
+          !    open(iunit, file=trim(fname), status=trim(stat), position=trim(posv))
+          !  else
+          !    open(iunit, file=trim(fname), position=trim(posv))
+          !  end if
+          !end if
 
           exit
         end if
