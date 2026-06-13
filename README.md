@@ -1,7 +1,7 @@
 # ANATRA 1.1.0
 
-[Manual (English)](./docs/anatra_manual_en.pdf)  
-[Manual (Japanese)](./docs/anatra_manual_jpn.pdf)
+[Manual (English)](https://kenkasa.github.io/anatra-docs-en/)  
+[Manual (Japanese)](https://kenkasa.github.io/anatra-docs-jpn/)
 
 **ANATRA** (*Ana*lyze *Tra*jectories) is a collection of Tcl/Fortran90 programs for analyzing trajectories obtained from Molecular Dynamics (MD) simulations.
 
